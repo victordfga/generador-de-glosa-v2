@@ -139,7 +139,6 @@ const GeneradorGlosasSIGA = () => {
     ],
     'orden-compra': [
       { id: 'descripcionGeneral', label: 'Descripción General del Bien', tipo: 'textarea', required: true },
-      { id: 'descripcionItem', label: 'Descripción del Item en el Sistema', tipo: 'text', required: true },
       { id: 'unidadOrganica', label: 'Unidad Orgánica Solicitante', tipo: 'selectCustom', opciones: unidadesOrganicas, required: true },
       { id: 'detalleBien', label: 'Detalle Específico del Bien', tipo: 'textarea', required: true },
       { id: 'plazo', label: 'Plazo de Entrega (en días)', tipo: 'text', required: true },
@@ -317,8 +316,7 @@ CERTIFICADO N° ${formData.certificado || ''} / OS N° ${formData.ordenServicio 
         }
       } 
       else if (tipoGlosa === 'orden-compra') {
-        glosa = `POR LA ${formData.descripcionGeneral?.toUpperCase() || ''}
-- ${formData.descripcionItem?.toUpperCase() || ''}`;
+        glosa = `POR LA ${formData.descripcionGeneral?.toUpperCase() || ''}`;
         
         items.forEach(item => {
           if (item.descripcion) {
