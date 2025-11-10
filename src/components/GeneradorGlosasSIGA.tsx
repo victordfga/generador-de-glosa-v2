@@ -279,7 +279,7 @@ const GeneradorGlosasSIGA = () => {
       let glosa = '';
 
       if (tipoGlosa === 'orden-servicio-recurrente') {
-        glosa = `POR LA ${formData.descripcionGeneral?.toUpperCase() || ''}
+        glosa = `POR LA CONTRATACIÓN DE ${formData.descripcionGeneral?.toUpperCase() || ''}
 - ${formData.descripcionItem?.toUpperCase() || ''}
 PEDIDO DE SERVICIO SOLICITADO POR ${formData.unidadOrganica?.toUpperCase() || ''}.
 
@@ -296,7 +296,7 @@ PEDIDO DE SERVICIO N° ${formData.pedidoInterno || ''}
 CERTIFICADO N° ${formData.certificado || ''} / OS N° ${formData.ordenServicio || ''}`;
       } 
       else if (tipoGlosa === 'orden-servicio-consultoria') {
-        glosa = `POR LA ${formData.descripcionGeneral?.toUpperCase() || ''}
+        glosa = `POR LA CONTRATACIÓN DE ${formData.descripcionGeneral?.toUpperCase() || ''}
 - ${formData.descripcionItem?.toUpperCase() || ''}
 PEDIDO DE SERVICIO SOLICITADO POR ${formData.unidadOrganica?.toUpperCase() || ''}.
 
@@ -317,7 +317,7 @@ CERTIFICADO N° ${formData.certificado || ''} / OS N° ${formData.ordenServicio 
         }
       } 
       else if (tipoGlosa === 'orden-compra') {
-        glosa = `POR LA ${formData.descripcionGeneral?.toUpperCase() || ''}`;
+        glosa = `POR LA CONTRATACIÓN DE PROVEEDOR PARA LA ADQUISICIÓN DE ${formData.descripcionGeneral?.toUpperCase() || ''}`;
         
         items.forEach(item => {
           if (item.descripcion) {
@@ -340,7 +340,7 @@ PEDIDO DE COMPRA N° ${formData.pedidoInterno || ''}
 CERTIFICADO N° ${formData.certificado || ''} / OC N° ${formData.ordenCompra || ''}`;
       } 
       else if (tipoGlosa === 'pago-contrato') {
-        glosa = `${formData.descripcionContrato?.toUpperCase() || ''}
+        glosa = `POR EL PAGO DE VALORIZACIÓN DE ${formData.descripcionContrato?.toUpperCase() || ''}
 
 PERIODO O VALORIZACIÓN: ${formData.periodoValorizacion?.toUpperCase() || ''}
 
