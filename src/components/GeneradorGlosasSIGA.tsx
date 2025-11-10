@@ -96,6 +96,7 @@ const GeneradorGlosasSIGA = () => {
     'Secretaría Técnica de la Sede Central del Gobierno Regional de Piura',
     'Sub Gerencia Regional de Desarrollo Institucional',
     'Sub Gerencia Regional de Gestión de Recursos Naturales',
+    'Sub Gerencia Regional de Gestión Ambiental',
     'Sub Gerencia Regional de Normas, Monitoreo y Evaluación GRI',
     'Sub Gerencia Regional de Planeamiento, Programación e Inversión',
     'Sub Gerencia Regional de Promoción de Inversiones',
