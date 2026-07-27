@@ -13,7 +13,8 @@ export type TipoGlosa =
   | 'orden-compra'
   | 'pago-contrato';
 
-export type TipoCampo = 'text' | 'textarea' | 'select' | 'selectCustom';
+/** 'combo' = input de texto libre con sugerencias filtrables (buscar mientras se escribe). */
+export type TipoCampo = 'text' | 'textarea' | 'combo';
 
 export interface CampoConfig {
   id: string;
@@ -37,16 +38,19 @@ export const TIPOS_GLOSA: TipoGlosaMeta[] = [
   { valor: 'pago-contrato', etiqueta: 'Pago de Contrato / Valorización' },
 ];
 
+/** Tipos de documento sugeridos para los campos de referencia/atención documentaria. */
+export const TIPOS_DOCUMENTO: string[] = ['MEMORANDO', 'INFORME', 'REQUERIMIENTO'];
+
 export const CAMPOS_POR_TIPO: Record<TipoGlosa, CampoConfig[]> = {
   'orden-servicio-consultoria': [
     { id: 'descripcionGeneral', label: 'Descripción General del Servicio', tipo: 'textarea', required: true },
     { id: 'descripcionItem', label: 'Descripción del Item en el Sistema', tipo: 'text', required: true },
-    { id: 'unidadOrganica', label: 'Área Usuaria Solicitante', tipo: 'selectCustom', opciones: AREAS_USUARIAS_NOMBRES, required: true },
+    { id: 'unidadOrganica', label: 'Área Usuaria Solicitante', tipo: 'combo', opciones: AREAS_USUARIAS_NOMBRES, required: true },
     { id: 'detalleServicio', label: 'Detalle Específico del Servicio', tipo: 'textarea', required: true },
     { id: 'plazo', label: 'Plazo de Ejecución (en días)', tipo: 'text', required: true },
     { id: 'garantia', label: 'Descripción de la Garantía', tipo: 'text', placeholder: 'Ej: DURANTE EL SERVICIO' },
-    { id: 'docReferencia', label: 'Documento de Referencia', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N° 282-2025-MDVO/OA', required: true },
-    { id: 'docAtendido', label: 'Documento Atendido', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N° 331-2025-MDVO/GM', required: true },
+    { id: 'docReferencia', label: 'Documento de Referencia', tipo: 'combo', opciones: TIPOS_DOCUMENTO, placeholder: 'Ej: MEMORÁNDUM N° 282-2025-MDVO/OA', required: true },
+    { id: 'docAtendido', label: 'Documento Atendido', tipo: 'combo', opciones: TIPOS_DOCUMENTO, placeholder: 'Ej: MEMORÁNDUM N° 331-2025-MDVO/GM', required: true },
     { id: 'pedidoInterno', label: 'Nro. de Pedido de Servicio', tipo: 'text', required: true },
     { id: 'certificado', label: 'Nro. de Certificado Presupuestal', tipo: 'text', required: true },
     { id: 'ordenServicio', label: 'Nro. de Orden de Servicio (O/S)', tipo: 'text', required: true },
@@ -54,23 +58,23 @@ export const CAMPOS_POR_TIPO: Record<TipoGlosa, CampoConfig[]> = {
   'orden-servicio-recurrente': [
     { id: 'descripcionGeneral', label: 'Descripción General del Servicio', tipo: 'textarea', required: true },
     { id: 'descripcionItem', label: 'Descripción del Item en el Sistema', tipo: 'text', required: true },
-    { id: 'unidadOrganica', label: 'Área Usuaria Solicitante', tipo: 'selectCustom', opciones: AREAS_USUARIAS_NOMBRES, required: true },
+    { id: 'unidadOrganica', label: 'Área Usuaria Solicitante', tipo: 'combo', opciones: AREAS_USUARIAS_NOMBRES, required: true },
     { id: 'detalleServicio', label: 'Detalle Específico del Servicio', tipo: 'textarea', required: true },
     { id: 'periodo', label: 'Periodo del Servicio', tipo: 'text', placeholder: 'Ej: SEPTIEMBRE, OCTUBRE, NOVIEMBRE Y DICIEMBRE DEL 2025', required: true },
-    { id: 'docReferencia', label: 'Documento de Referencia', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N° 282-2025-MDVO/OA', required: true },
-    { id: 'docAtendido', label: 'Documento Atendido', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N° 331-2025-MDVO/GM', required: true },
+    { id: 'docReferencia', label: 'Documento de Referencia', tipo: 'combo', opciones: TIPOS_DOCUMENTO, placeholder: 'Ej: MEMORÁNDUM N° 282-2025-MDVO/OA', required: true },
+    { id: 'docAtendido', label: 'Documento Atendido', tipo: 'combo', opciones: TIPOS_DOCUMENTO, placeholder: 'Ej: MEMORÁNDUM N° 331-2025-MDVO/GM', required: true },
     { id: 'pedidoInterno', label: 'Nro. de Pedido de Servicio', tipo: 'text', required: true },
     { id: 'certificado', label: 'Nro. de Certificado Presupuestal', tipo: 'text', required: true },
     { id: 'ordenServicio', label: 'Nro. de Orden de Servicio (O/S)', tipo: 'text', required: true },
   ],
   'orden-compra': [
     { id: 'descripcionGeneral', label: 'Descripción General del Bien', tipo: 'textarea', required: true },
-    { id: 'unidadOrganica', label: 'Área Usuaria Solicitante', tipo: 'selectCustom', opciones: AREAS_USUARIAS_NOMBRES, required: true },
+    { id: 'unidadOrganica', label: 'Área Usuaria Solicitante', tipo: 'combo', opciones: AREAS_USUARIAS_NOMBRES, required: true },
     { id: 'detalleBien', label: 'Detalle Específico del Bien', tipo: 'textarea', required: true },
     { id: 'plazo', label: 'Plazo de Entrega (en días)', tipo: 'text', required: true },
     { id: 'garantia', label: 'Descripción de la Garantía', tipo: 'text', required: true },
-    { id: 'docReferencia', label: 'Documento de Referencia', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N° 2843-2025-MDVO/OGA', required: true },
-    { id: 'docAtendido', label: 'Documento Atendido', tipo: 'text', placeholder: 'Ej: MEMORANDO N° 922-2025-MDVO/GM', required: true },
+    { id: 'docReferencia', label: 'Documento de Referencia', tipo: 'combo', opciones: TIPOS_DOCUMENTO, placeholder: 'Ej: MEMORÁNDUM N° 2843-2025-MDVO/OGA', required: true },
+    { id: 'docAtendido', label: 'Documento Atendido', tipo: 'combo', opciones: TIPOS_DOCUMENTO, placeholder: 'Ej: MEMORANDO N° 922-2025-MDVO/GM', required: true },
     { id: 'pedidoInterno', label: 'Nro. de Pedido de Compra', tipo: 'text', required: true },
     { id: 'certificado', label: 'Nro. de Certificado Presupuestal', tipo: 'text', required: true },
     { id: 'ordenCompra', label: 'Nro. de Orden de Compra (O/C)', tipo: 'text', required: true },
@@ -79,7 +83,7 @@ export const CAMPOS_POR_TIPO: Record<TipoGlosa, CampoConfig[]> = {
     { id: 'descripcionContrato', label: 'Descripción del Servicio del Contrato', tipo: 'textarea', required: true },
     { id: 'periodoValorizacion', label: 'Periodo o Valorización a Pagar', tipo: 'text', required: true },
     { id: 'docConformidad', label: 'Documento de Conformidad', tipo: 'text', required: true },
-    { id: 'docAtendido', label: 'Documento Atendido', tipo: 'text', placeholder: 'Ej: INFORME N° 3148-2025-MDVO/OA', required: true },
+    { id: 'docAtendido', label: 'Documento Atendido', tipo: 'combo', opciones: TIPOS_DOCUMENTO, placeholder: 'Ej: INFORME N° 3148-2025-MDVO/OA', required: true },
     { id: 'contratoNumero', label: 'Nro. de Contrato Original', tipo: 'text', required: true },
   ],
 };

@@ -373,38 +373,25 @@ const GeneradorGlosasSIGA = () => {
                             className={`input-field ${disabledCls}`}
                             rows={3}
                           />
-                        ) : campo.tipo === 'selectCustom' ? (
-                          <div className="space-y-2">
-                            <select
+                        ) : campo.tipo === 'combo' ? (
+                          <>
+                            <input
                               id={campo.id}
-                              value={
-                                formData[campo.id] === undefined
-                                  ? ''
-                                  : campo.opciones?.includes(formData[campo.id])
-                                    ? formData[campo.id]
-                                    : '__CUSTOM__'
-                              }
-                              onChange={(e) => handleInputChange(campo.id, e.target.value === '__CUSTOM__' ? '' : e.target.value)}
+                              type="text"
+                              list={`${campo.id}-opciones`}
+                              value={formData[campo.id] || ''}
+                              onChange={(e) => handleInputChange(campo.id, e.target.value)}
+                              placeholder={campo.placeholder ?? 'Escriba para buscar...'}
                               disabled={disabled}
+                              autoComplete="off"
                               className={`input-field ${disabledCls}`}
-                            >
-                              <option value="">-- Seleccione --</option>
+                            />
+                            <datalist id={`${campo.id}-opciones`}>
                               {campo.opciones?.map((opcion) => (
-                                <option key={opcion} value={opcion}>{opcion}</option>
+                                <option key={opcion} value={opcion} />
                               ))}
-                              <option value="__CUSTOM__">✏️ Escribir otro...</option>
-                            </select>
-                            {formData[campo.id] !== undefined && !campo.opciones?.includes(formData[campo.id]) && !disabled && (
-                              <input
-                                type="text"
-                                value={formData[campo.id] || ''}
-                                onChange={(e) => handleInputChange(campo.id, e.target.value)}
-                                placeholder={`Escriba ${campo.label.toLowerCase()}`}
-                                className="input-field"
-                                aria-label={campo.label}
-                              />
-                            )}
-                          </div>
+                            </datalist>
+                          </>
                         ) : (
                           <input
                             id={campo.id}
