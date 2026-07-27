@@ -6,26 +6,48 @@
   html {
     font-family: 'Inter', system-ui, sans-serif;
   }
+
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
 }
 
 @layer components {
+  /* Contenedor base tipo tarjeta: borde sutil de 1px y sombra suave */
+  .card {
+    @apply bg-white rounded-2xl ring-1 ring-slate-200 shadow-sm;
+  }
+
+  /* Botones planos, sin gradientes, con estados sobrios */
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 font-bold text-lg shadow-lg transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+           bg-blue-600 text-white transition-colors hover:bg-blue-700
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  
+
   .btn-secondary {
-    @apply bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-lg hover:from-orange-600 hover:to-red-600 font-bold text-lg shadow-lg transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+           bg-white text-slate-700 ring-1 ring-inset ring-slate-300 transition-colors hover:bg-slate-50
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  
+
   .btn-success {
-    @apply bg-gradient-to-r from-green-600 to-teal-600 text-white p-4 rounded-lg hover:from-green-700 hover:to-teal-700 font-bold text-lg shadow-lg transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+           bg-emerald-600 text-white transition-colors hover:bg-emerald-700
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  
+
+  /* Campos de formulario: fondo blanco, borde sutil, foco con anillo suave */
   .input-field {
-    @apply w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200;
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900
+           placeholder:text-slate-400 transition
+           focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20;
   }
-  
+
   .input-field:disabled {
-    @apply bg-gray-100 cursor-not-allowed;
+    @apply bg-slate-50 text-slate-500 cursor-not-allowed;
   }
 }

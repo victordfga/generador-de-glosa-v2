@@ -261,27 +261,31 @@ const GeneradorGlosasSIGA = () => {
   const camposActuales = tipoGlosa ? CAMPOS_POR_TIPO[tipoGlosa] : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 p-4 print:bg-white print:p-0">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-2xl overflow-hidden print:shadow-none">
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8 print:p-0">
+      <div className="max-w-6xl mx-auto">
+        <div className="card overflow-hidden print:shadow-none print:ring-0">
           {/* Encabezado institucional */}
-          <header className="bg-gradient-to-r from-blue-700 to-sky-700 p-6 text-white print:hidden">
-            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
-              <FileText size={36} aria-hidden="true" />
-              Generador de Glosas SIGA
-            </h1>
-            <p className="mt-2 text-blue-100">
-              Municipalidad Distrital 26 de Octubre · Oficina de Abastecimiento
-            </p>
+          <header className="flex items-center gap-4 px-6 py-5 border-b border-slate-200 print:hidden">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
+              <FileText size={24} aria-hidden="true" />
+            </span>
+            <div>
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">
+                Generador de Glosas SIGA
+              </h1>
+              <p className="text-sm text-slate-500">
+                Municipalidad Distrital 26 de Octubre · Oficina de Abastecimiento
+              </p>
+            </div>
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 print:block print:p-0">
             {/* Panel Principal */}
-            <div className="lg:col-span-2 space-y-6 print:space-y-0">
+            <div className="lg:col-span-2 space-y-5 print:space-y-0">
               {/* Selección de Tipo */}
-              <div className="bg-gradient-to-r from-sky-50 to-blue-50 p-4 rounded-lg border-2 border-sky-200 print:hidden">
-                <label htmlFor="tipoGlosa" className="block text-sm font-bold text-gray-700 mb-2">
-                  TIPO DE GLOSA A GENERAR
+              <div className="print:hidden">
+                <label htmlFor="tipoGlosa" className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                  Tipo de glosa a generar
                 </label>
                 <select
                   id="tipoGlosa"
@@ -298,15 +302,15 @@ const GeneradorGlosasSIGA = () => {
 
               {/* Errores de validación */}
               {validationErrors.length > 0 && (
-                <div className="bg-red-50 border-2 border-red-300 p-4 rounded-lg print:hidden" role="alert">
+                <div className="bg-red-50 ring-1 ring-inset ring-red-200 p-4 rounded-xl print:hidden" role="alert">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle size={20} className="text-red-600" aria-hidden="true" />
-                    <h3 className="font-bold text-red-800">Errores de validación</h3>
+                    <AlertCircle size={18} className="text-red-500" aria-hidden="true" />
+                    <h3 className="font-semibold text-red-800 text-sm">Revisa estos campos</h3>
                   </div>
                   <ul className="space-y-1">
                     {validationErrors.map((error, index) => (
                       <li key={index} className="text-red-700 text-sm flex items-center gap-2">
-                        <span className="w-2 h-2 bg-red-500 rounded-full" aria-hidden="true"></span>
+                        <span className="w-1.5 h-1.5 bg-red-400 rounded-full" aria-hidden="true"></span>
                         {error.message}
                       </li>
                     ))}
@@ -316,10 +320,10 @@ const GeneradorGlosasSIGA = () => {
 
               {/* Plantillas Rápidas */}
               {plantillas.some((p) => p !== null) && (
-                <div className="bg-amber-50 p-4 rounded-lg border-2 border-amber-300 print:hidden">
-                  <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-                    <Save size={20} className="text-amber-600" aria-hidden="true" />
-                    Plantillas Rápidas
+                <div className="rounded-xl bg-slate-50 ring-1 ring-inset ring-slate-200 p-4 print:hidden">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3 flex items-center gap-2">
+                    <Save size={16} className="text-slate-400" aria-hidden="true" />
+                    Plantillas rápidas
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {plantillas.map((plantilla, index) => (
@@ -327,7 +331,7 @@ const GeneradorGlosasSIGA = () => {
                         <button
                           key={index}
                           onClick={() => cargarPlantilla(plantilla)}
-                          className="p-2 bg-white border-2 border-amber-400 rounded hover:bg-amber-100 text-xs text-left truncate font-medium transition-colors"
+                          className="px-3 py-2 bg-white ring-1 ring-inset ring-slate-200 rounded-lg hover:ring-blue-400 hover:bg-blue-50 text-xs text-left truncate font-medium text-slate-700 transition-colors"
                           title={plantilla.nombre}
                         >
                           {plantilla.nombre}
@@ -342,10 +346,10 @@ const GeneradorGlosasSIGA = () => {
               {tipoGlosa && (
                 <div className="space-y-4 print:hidden">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-800">Datos de la Glosa</h2>
+                    <h2 className="text-base font-semibold text-slate-900">Datos de la glosa</h2>
                     <button
                       onClick={limpiarFormulario}
-                      className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-medium transition-colors"
+                      className="px-3 py-1.5 text-sm font-medium text-slate-500 rounded-lg hover:bg-slate-100 hover:text-slate-700 transition-colors"
                     >
                       Limpiar
                     </button>
@@ -356,7 +360,7 @@ const GeneradorGlosasSIGA = () => {
                     const disabledCls = disabled ? 'bg-gray-100 cursor-not-allowed' : '';
                     return (
                       <div key={campo.id}>
-                        <label htmlFor={campo.id} className="block text-sm font-bold text-gray-700 mb-1">
+                        <label htmlFor={campo.id} className="block text-sm font-medium text-slate-700 mb-1.5">
                           {campo.label} {campo.required && <span className="text-red-500">*</span>}
                         </label>
                         {campo.tipo === 'textarea' ? (
@@ -396,7 +400,7 @@ const GeneradorGlosasSIGA = () => {
                                 value={formData[campo.id] || ''}
                                 onChange={(e) => handleInputChange(campo.id, e.target.value)}
                                 placeholder={`Escriba ${campo.label.toLowerCase()}`}
-                                className="input-field bg-blue-50 border-blue-300"
+                                className="input-field"
                                 aria-label={campo.label}
                               />
                             )}
@@ -418,15 +422,15 @@ const GeneradorGlosasSIGA = () => {
 
                   {/* Items para Orden de Compra */}
                   {tipoGlosa === 'orden-compra' && (
-                    <div className="bg-gray-50 p-4 rounded-lg border-2 border-gray-300">
+                    <div className="rounded-xl bg-slate-50 ring-1 ring-inset ring-slate-200 p-4">
                       <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-bold text-gray-700">Ítems del Pedido</h3>
+                        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ítems del pedido</h3>
                         {glosaGenerada === '' && (
                           <button
                             onClick={agregarItem}
-                            className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
                           >
-                            <Plus size={16} aria-hidden="true" /> Agregar Ítem
+                            <Plus size={16} aria-hidden="true" /> Agregar ítem
                           </button>
                         )}
                       </div>
@@ -439,7 +443,7 @@ const GeneradorGlosasSIGA = () => {
                             placeholder="Descripción del ítem"
                             disabled={glosaGenerada !== ''}
                             aria-label={`Descripción del ítem ${index + 1}`}
-                            className={`col-span-2 sm:col-span-6 p-2 border rounded ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            className="col-span-2 sm:col-span-6 input-field"
                           />
                           <input
                             type="text"
@@ -448,7 +452,7 @@ const GeneradorGlosasSIGA = () => {
                             placeholder="Cant."
                             disabled={glosaGenerada !== ''}
                             aria-label={`Cantidad del ítem ${index + 1}`}
-                            className={`col-span-1 sm:col-span-2 p-2 border rounded ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            className="col-span-1 sm:col-span-2 input-field"
                           />
                           <input
                             type="text"
@@ -457,12 +461,12 @@ const GeneradorGlosasSIGA = () => {
                             placeholder="UND"
                             disabled={glosaGenerada !== ''}
                             aria-label={`Unidad del ítem ${index + 1}`}
-                            className={`col-span-1 sm:col-span-3 p-2 border rounded ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            className="col-span-1 sm:col-span-3 input-field"
                           />
                           {items.length > 1 && glosaGenerada === '' && (
                             <button
                               onClick={() => eliminarItem(index)}
-                              className="col-span-2 sm:col-span-1 p-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors flex items-center justify-center"
+                              className="col-span-2 sm:col-span-1 rounded-lg text-slate-400 ring-1 ring-inset ring-slate-200 bg-white hover:text-red-600 hover:ring-red-300 hover:bg-red-50 transition-colors flex items-center justify-center py-2"
                               aria-label={`Eliminar ítem ${index + 1}`}
                             >
                               <Trash2 size={16} aria-hidden="true" />
@@ -475,23 +479,23 @@ const GeneradorGlosasSIGA = () => {
 
                   {/* Botones de Acción */}
                   {!glosaGenerada ? (
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 pt-1">
                       <button
                         onClick={generarGlosa}
                         disabled={isLoading}
-                        className={`btn-primary flex-1 flex items-center justify-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className="btn-primary flex-1 py-3 text-base"
                       >
-                        <Zap size={20} aria-hidden="true" />
-                        {isLoading ? 'GENERANDO...' : 'GENERAR GLOSA'}
+                        <Zap size={18} aria-hidden="true" />
+                        {isLoading ? 'Generando…' : 'Generar glosa'}
                       </button>
                     </div>
                   ) : (
-                    <div className="flex gap-3">
-                      <button onClick={modificarGlosa} className="btn-secondary flex-1 flex items-center justify-center gap-2">
-                        <Pencil size={20} aria-hidden="true" /> MODIFICAR GLOSA
+                    <div className="flex gap-3 pt-1">
+                      <button onClick={modificarGlosa} className="btn-secondary flex-1">
+                        <Pencil size={18} aria-hidden="true" /> Modificar
                       </button>
-                      <button onClick={limpiarFormulario} className="btn-success flex-1 flex items-center justify-center gap-2">
-                        <FilePlus size={20} aria-hidden="true" /> NUEVA GLOSA
+                      <button onClick={limpiarFormulario} className="btn-success flex-1">
+                        <FilePlus size={18} aria-hidden="true" /> Nueva glosa
                       </button>
                     </div>
                   )}
@@ -499,12 +503,12 @@ const GeneradorGlosasSIGA = () => {
                   {/* Guardar como Plantilla */}
                   {glosaGenerada && (
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm text-gray-600 py-2">Guardar como plantilla:</span>
+                      <span className="text-sm text-slate-500 py-2">Guardar como plantilla:</span>
                       {[0, 1, 2].map((index) => (
                         <button
                           key={index}
                           onClick={() => guardarPlantilla(index)}
-                          className="px-3 py-2 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 text-sm font-medium transition-colors"
+                          className="px-3 py-1.5 bg-white text-slate-600 ring-1 ring-inset ring-slate-300 rounded-lg hover:bg-slate-50 hover:ring-blue-400 hover:text-blue-600 text-sm font-medium transition-colors"
                         >
                           Slot {index + 1}
                         </button>
@@ -516,24 +520,24 @@ const GeneradorGlosasSIGA = () => {
 
               {/* Glosa Generada */}
               {glosaGenerada && (
-                <div className="bg-green-50 p-4 rounded-lg border-2 border-green-300 print:border-0 print:bg-white print:p-0">
+                <div className="rounded-xl ring-1 ring-inset ring-slate-200 bg-white p-4 print:ring-0 print:p-0">
                   <div className="flex justify-between items-center mb-3 print:hidden">
-                    <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                      <CheckCircle size={20} className="text-green-600" aria-hidden="true" />
-                      Glosa Generada
+                    <h3 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
+                      <CheckCircle size={18} className="text-emerald-500" aria-hidden="true" />
+                      Glosa generada
                     </h3>
                     <div className="flex gap-2">
                       <button
                         onClick={imprimirGlosa}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 font-bold shadow transition-colors"
+                        className="btn-secondary px-3 py-2"
                       >
-                        <Printer size={20} aria-hidden="true" /> IMPRIMIR / PDF
+                        <Printer size={16} aria-hidden="true" /> Imprimir / PDF
                       </button>
                       <button
                         onClick={copiarGlosa}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold shadow-lg transition-colors"
+                        className="btn-primary px-3 py-2"
                       >
-                        <Copy size={20} aria-hidden="true" /> COPIAR
+                        <Copy size={16} aria-hidden="true" /> Copiar
                       </button>
                     </div>
                   </div>
@@ -542,7 +546,7 @@ const GeneradorGlosasSIGA = () => {
                     <p className="text-sm">Oficina de Abastecimiento · Glosa SIGA</p>
                     <hr className="my-2" />
                   </div>
-                  <pre className="glosa-print-area bg-white p-4 rounded border border-green-300 whitespace-pre-wrap text-sm font-mono print:border-0 print:text-base">
+                  <pre className="glosa-print-area rounded-lg bg-slate-50 ring-1 ring-inset ring-slate-200 p-4 whitespace-pre-wrap text-sm font-mono text-slate-800 leading-relaxed print:ring-0 print:bg-white print:text-base">
                     {glosaGenerada}
                   </pre>
                 </div>
@@ -551,23 +555,24 @@ const GeneradorGlosasSIGA = () => {
 
             {/* Panel Lateral - Historial */}
             <aside className="lg:col-span-1 print:hidden">
-              <div className="bg-gray-50 rounded-lg border-2 border-gray-300 p-4 sticky top-4">
-                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <Clock size={20} className="text-blue-600" aria-hidden="true" />
-                  Historial ({historial.length}/{MAX_HISTORIAL_ITEMS})
+              <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 sticky top-6">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                  <Clock size={16} className="text-slate-400" aria-hidden="true" />
+                  Historial
+                  <span className="ml-auto text-xs font-medium text-slate-400">{historial.length}/{MAX_HISTORIAL_ITEMS}</span>
                 </h3>
                 <div className="flex gap-2 mb-3">
                   <button
                     onClick={exportarHistorial}
                     disabled={historial.length === 0}
-                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white text-slate-600 ring-1 ring-inset ring-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     title="Descargar el historial como archivo de respaldo"
                   >
                     <Download size={14} aria-hidden="true" /> Exportar
                   </button>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-white border-2 border-blue-600 text-blue-700 rounded text-xs font-medium hover:bg-blue-50 transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white text-slate-600 ring-1 ring-inset ring-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
                     title="Cargar un historial desde un archivo de respaldo"
                   >
                     <Upload size={14} aria-hidden="true" /> Importar
@@ -582,40 +587,42 @@ const GeneradorGlosasSIGA = () => {
                   />
                 </div>
                 <div className="relative mb-3">
-                  <Search size={16} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
                   <input
                     type="search"
                     value={busquedaHistorial}
                     onChange={(e) => setBusquedaHistorial(e.target.value)}
-                    placeholder="Buscar en el historial..."
+                    placeholder="Buscar…"
                     aria-label="Buscar en el historial"
-                    className="w-full pl-8 pr-2 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
-                <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                <div className="space-y-2 max-h-[560px] overflow-y-auto">
                   {historialFiltrado.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-8">
-                      {historial.length === 0 ? 'No hay glosas generadas aún' : 'Sin resultados para la búsqueda'}
+                    <p className="text-slate-400 text-sm text-center py-10">
+                      {historial.length === 0 ? 'Aún no has generado glosas' : 'Sin resultados'}
                     </p>
                   ) : (
                     historialFiltrado.map((glosa) => (
                       <div
                         key={glosa.id}
-                        className="relative bg-white rounded border border-gray-300 hover:border-blue-500 transition-all"
+                        className="group relative bg-white rounded-xl ring-1 ring-inset ring-slate-200 hover:ring-blue-400 transition-all"
                       >
                         <button
                           className="w-full text-left p-3 pr-8 cursor-pointer"
                           onClick={() => duplicarGlosa(glosa)}
                         >
-                          <div className="text-xs text-gray-500 mb-1">{glosa.fecha}</div>
-                          <div className="text-sm font-medium text-gray-800 line-clamp-2">
-                            {glosa.texto.substring(0, 70)}...
+                          <div className="text-xs text-slate-400 mb-1">{glosa.fecha}</div>
+                          <div className="text-sm text-slate-700 line-clamp-2">
+                            {glosa.texto.substring(0, 70)}…
                           </div>
-                          <div className="text-xs text-blue-600 mt-2 font-medium">Click para duplicar</div>
+                          <div className="text-xs text-blue-600 mt-2 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            Clic para duplicar
+                          </div>
                         </button>
                         <button
                           onClick={() => eliminarDelHistorial(glosa.id)}
-                          className="absolute top-1 right-1 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          className="absolute top-1.5 right-1.5 p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                           aria-label="Eliminar del historial"
                           title="Eliminar del historial"
                         >
@@ -633,30 +640,30 @@ const GeneradorGlosasSIGA = () => {
 
       {/* Notificación de Éxito */}
       {showSuccess && (
-        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-2xl print:hidden" role="status">
-          ✅ ¡Glosa copiada al portapapeles!
+        <div className="fixed bottom-5 right-5 flex items-center gap-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg print:hidden" role="status">
+          <CheckCircle size={18} className="text-emerald-400" aria-hidden="true" />
+          Glosa copiada al portapapeles
         </div>
       )}
 
       {/* Diálogo de Confirmación */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 print:hidden" role="dialog" aria-modal="true">
-          <div className="bg-white p-6 rounded-lg shadow-2xl max-w-md mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle size={24} className="text-amber-600" aria-hidden="true" />
-              <h3 className="text-lg font-bold text-gray-800">Confirmar acción</h3>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden" role="dialog" aria-modal="true">
+          <div className="bg-white p-6 rounded-2xl shadow-xl ring-1 ring-slate-200 max-w-md w-full">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100">
+                <AlertCircle size={20} className="text-amber-600" aria-hidden="true" />
+              </span>
+              <h3 className="text-base font-semibold text-slate-900">Confirmar acción</h3>
             </div>
-            <p className="text-gray-600 mb-6">{confirmMensaje}</p>
+            <p className="text-sm text-slate-600 mb-6">{confirmMensaje}</p>
             <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowConfirmDialog(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
-              >
+              <button onClick={() => setShowConfirmDialog(false)} className="btn-secondary">
                 Cancelar
               </button>
               <button
                 onClick={ejecutarAccionConfirmada}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500"
               >
                 Confirmar
               </button>
