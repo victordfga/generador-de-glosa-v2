@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Copy, Plus, Save, Trash2, FileText, Clock, AlertCircle, CheckCircle,
-  Printer, Search, Zap, Pencil, FilePlus, Download, Upload,
+  Printer, Search, Zap, Pencil, FilePlus, Download, Upload, Sun, Moon,
 } from 'lucide-react';
 import { TIPOS_GLOSA, CAMPOS_POR_TIPO } from '../data/tiposGlosa';
 import type { TipoGlosa } from '../data/tiposGlosa';
@@ -11,6 +11,7 @@ import {
 import type {
   Item, FormData, GlosaHistorial, Plantilla, ValidationError,
 } from '../lib/glosa';
+import { useTheme } from '../hooks/useTheme';
 
 // Constantes
 const MAX_HISTORIAL_ITEMS = 200;
@@ -35,6 +36,7 @@ const GeneradorGlosasSIGA = () => {
   const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isDark, toggleTheme } = useTheme();
 
   // Cargar datos del localStorage al inicializar
   useEffect(() => {
@@ -265,18 +267,26 @@ const GeneradorGlosasSIGA = () => {
       <div className="max-w-6xl mx-auto">
         <div className="card overflow-hidden print:shadow-none print:ring-0">
           {/* Encabezado institucional */}
-          <header className="flex items-center gap-4 px-6 py-5 border-b border-slate-200 print:hidden">
+          <header className="flex items-center gap-4 px-6 py-5 border-b border-slate-200 dark:border-slate-800 print:hidden">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
               <FileText size={24} aria-hidden="true" />
             </span>
-            <div>
-              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                 Generador de Glosas SIGA
               </h1>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Municipalidad Distrital 26 de Octubre · Oficina de Abastecimiento
               </p>
             </div>
+            <button
+              onClick={toggleTheme}
+              className="ml-auto shrink-0 flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
+              aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
+              title={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
+            >
+              {isDark ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
+            </button>
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 print:block print:p-0">
@@ -284,7 +294,7 @@ const GeneradorGlosasSIGA = () => {
             <div className="lg:col-span-2 space-y-5 print:space-y-0">
               {/* Selección de Tipo */}
               <div className="print:hidden">
-                <label htmlFor="tipoGlosa" className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                <label htmlFor="tipoGlosa" className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
                   Tipo de glosa a generar
                 </label>
                 <select
@@ -302,14 +312,14 @@ const GeneradorGlosasSIGA = () => {
 
               {/* Errores de validación */}
               {validationErrors.length > 0 && (
-                <div className="bg-red-50 ring-1 ring-inset ring-red-200 p-4 rounded-xl print:hidden" role="alert">
+                <div className="bg-red-50 ring-1 ring-inset ring-red-200 p-4 rounded-xl print:hidden dark:bg-red-950/40 dark:ring-red-900" role="alert">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle size={18} className="text-red-500" aria-hidden="true" />
-                    <h3 className="font-semibold text-red-800 text-sm">Revisa estos campos</h3>
+                    <AlertCircle size={18} className="text-red-500 dark:text-red-400" aria-hidden="true" />
+                    <h3 className="font-semibold text-red-800 dark:text-red-300 text-sm">Revisa estos campos</h3>
                   </div>
                   <ul className="space-y-1">
                     {validationErrors.map((error, index) => (
-                      <li key={index} className="text-red-700 text-sm flex items-center gap-2">
+                      <li key={index} className="text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-red-400 rounded-full" aria-hidden="true"></span>
                         {error.message}
                       </li>
@@ -320,8 +330,8 @@ const GeneradorGlosasSIGA = () => {
 
               {/* Plantillas Rápidas */}
               {plantillas.some((p) => p !== null) && (
-                <div className="rounded-xl bg-slate-50 ring-1 ring-inset ring-slate-200 p-4 print:hidden">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3 flex items-center gap-2">
+                <div className="rounded-xl bg-slate-50 ring-1 ring-inset ring-slate-200 p-4 print:hidden dark:bg-slate-800/50 dark:ring-slate-700">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
                     <Save size={16} className="text-slate-400" aria-hidden="true" />
                     Plantillas rápidas
                   </h3>
@@ -331,7 +341,7 @@ const GeneradorGlosasSIGA = () => {
                         <button
                           key={index}
                           onClick={() => cargarPlantilla(plantilla)}
-                          className="px-3 py-2 bg-white ring-1 ring-inset ring-slate-200 rounded-lg hover:ring-blue-400 hover:bg-blue-50 text-xs text-left truncate font-medium text-slate-700 transition-colors"
+                          className="px-3 py-2 bg-white ring-1 ring-inset ring-slate-200 rounded-lg hover:ring-blue-400 hover:bg-blue-50 text-xs text-left truncate font-medium text-slate-700 transition-colors dark:bg-slate-800 dark:ring-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:ring-blue-500"
                           title={plantilla.nombre}
                         >
                           {plantilla.nombre}
@@ -346,10 +356,10 @@ const GeneradorGlosasSIGA = () => {
               {tipoGlosa && (
                 <div className="space-y-4 print:hidden">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-base font-semibold text-slate-900">Datos de la glosa</h2>
+                    <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Datos de la glosa</h2>
                     <button
                       onClick={limpiarFormulario}
-                      className="px-3 py-1.5 text-sm font-medium text-slate-500 rounded-lg hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                      className="px-3 py-1.5 text-sm font-medium text-slate-500 rounded-lg hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
                     >
                       Limpiar
                     </button>
@@ -357,10 +367,9 @@ const GeneradorGlosasSIGA = () => {
 
                   {camposActuales.map((campo) => {
                     const disabled = glosaGenerada !== '';
-                    const disabledCls = disabled ? 'bg-gray-100 cursor-not-allowed' : '';
                     return (
                       <div key={campo.id}>
-                        <label htmlFor={campo.id} className="block text-sm font-medium text-slate-700 mb-1.5">
+                        <label htmlFor={campo.id} className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                           {campo.label} {campo.required && <span className="text-red-500">*</span>}
                         </label>
                         {campo.tipo === 'textarea' ? (
@@ -370,7 +379,7 @@ const GeneradorGlosasSIGA = () => {
                             onChange={(e) => handleInputChange(campo.id, e.target.value)}
                             placeholder={campo.placeholder}
                             disabled={disabled}
-                            className={`input-field ${disabledCls}`}
+                            className="input-field"
                             rows={3}
                           />
                         ) : campo.tipo === 'combo' ? (
@@ -384,7 +393,7 @@ const GeneradorGlosasSIGA = () => {
                               placeholder={campo.placeholder ?? 'Escriba para buscar...'}
                               disabled={disabled}
                               autoComplete="off"
-                              className={`input-field ${disabledCls}`}
+                              className="input-field"
                             />
                             <datalist id={`${campo.id}-opciones`}>
                               {campo.opciones?.map((opcion) => (
@@ -400,7 +409,7 @@ const GeneradorGlosasSIGA = () => {
                             onChange={(e) => handleInputChange(campo.id, e.target.value)}
                             placeholder={campo.placeholder}
                             disabled={disabled}
-                            className={`input-field ${disabledCls}`}
+                            className="input-field"
                           />
                         )}
                       </div>
@@ -409,13 +418,13 @@ const GeneradorGlosasSIGA = () => {
 
                   {/* Items para Orden de Compra */}
                   {tipoGlosa === 'orden-compra' && (
-                    <div className="rounded-xl bg-slate-50 ring-1 ring-inset ring-slate-200 p-4">
+                    <div className="rounded-xl bg-slate-50 ring-1 ring-inset ring-slate-200 p-4 dark:bg-slate-800/50 dark:ring-slate-700">
                       <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ítems del pedido</h3>
+                        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ítems del pedido</h3>
                         {glosaGenerada === '' && (
                           <button
                             onClick={agregarItem}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
                           >
                             <Plus size={16} aria-hidden="true" /> Agregar ítem
                           </button>
@@ -453,7 +462,7 @@ const GeneradorGlosasSIGA = () => {
                           {items.length > 1 && glosaGenerada === '' && (
                             <button
                               onClick={() => eliminarItem(index)}
-                              className="col-span-2 sm:col-span-1 rounded-lg text-slate-400 ring-1 ring-inset ring-slate-200 bg-white hover:text-red-600 hover:ring-red-300 hover:bg-red-50 transition-colors flex items-center justify-center py-2"
+                              className="col-span-2 sm:col-span-1 rounded-lg text-slate-400 ring-1 ring-inset ring-slate-200 bg-white hover:text-red-600 hover:ring-red-300 hover:bg-red-50 dark:bg-slate-800 dark:ring-slate-700 dark:hover:bg-red-950/40 dark:hover:ring-red-800 transition-colors flex items-center justify-center py-2"
                               aria-label={`Eliminar ítem ${index + 1}`}
                             >
                               <Trash2 size={16} aria-hidden="true" />
@@ -490,12 +499,12 @@ const GeneradorGlosasSIGA = () => {
                   {/* Guardar como Plantilla */}
                   {glosaGenerada && (
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm text-slate-500 py-2">Guardar como plantilla:</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400 py-2">Guardar como plantilla:</span>
                       {[0, 1, 2].map((index) => (
                         <button
                           key={index}
                           onClick={() => guardarPlantilla(index)}
-                          className="px-3 py-1.5 bg-white text-slate-600 ring-1 ring-inset ring-slate-300 rounded-lg hover:bg-slate-50 hover:ring-blue-400 hover:text-blue-600 text-sm font-medium transition-colors"
+                          className="px-3 py-1.5 bg-white text-slate-600 ring-1 ring-inset ring-slate-300 rounded-lg hover:bg-slate-50 hover:ring-blue-400 hover:text-blue-600 text-sm font-medium transition-colors dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700"
                         >
                           Slot {index + 1}
                         </button>
@@ -507,9 +516,9 @@ const GeneradorGlosasSIGA = () => {
 
               {/* Glosa Generada */}
               {glosaGenerada && (
-                <div className="rounded-xl ring-1 ring-inset ring-slate-200 bg-white p-4 print:ring-0 print:p-0">
+                <div className="rounded-xl ring-1 ring-inset ring-slate-200 bg-white p-4 print:ring-0 print:p-0 dark:bg-slate-800/50 dark:ring-slate-700">
                   <div className="flex justify-between items-center mb-3 print:hidden">
-                    <h3 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
                       <CheckCircle size={18} className="text-emerald-500" aria-hidden="true" />
                       Glosa generada
                     </h3>
@@ -533,7 +542,7 @@ const GeneradorGlosasSIGA = () => {
                     <p className="text-sm">Oficina de Abastecimiento · Glosa SIGA</p>
                     <hr className="my-2" />
                   </div>
-                  <pre className="glosa-print-area rounded-lg bg-slate-50 ring-1 ring-inset ring-slate-200 p-4 whitespace-pre-wrap text-sm font-mono text-slate-800 leading-relaxed print:ring-0 print:bg-white print:text-base">
+                  <pre className="glosa-print-area rounded-lg bg-slate-50 ring-1 ring-inset ring-slate-200 p-4 whitespace-pre-wrap text-sm font-mono text-slate-800 leading-relaxed print:ring-0 print:bg-white print:text-base dark:bg-slate-900 dark:ring-slate-700 dark:text-slate-200">
                     {glosaGenerada}
                   </pre>
                 </div>
@@ -542,8 +551,8 @@ const GeneradorGlosasSIGA = () => {
 
             {/* Panel Lateral - Historial */}
             <aside className="lg:col-span-1 print:hidden">
-              <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 sticky top-6">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+              <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 sticky top-6 dark:bg-slate-900 dark:ring-slate-800">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2 dark:text-slate-100">
                   <Clock size={16} className="text-slate-400" aria-hidden="true" />
                   Historial
                   <span className="ml-auto text-xs font-medium text-slate-400">{historial.length}/{MAX_HISTORIAL_ITEMS}</span>
@@ -552,14 +561,14 @@ const GeneradorGlosasSIGA = () => {
                   <button
                     onClick={exportarHistorial}
                     disabled={historial.length === 0}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white text-slate-600 ring-1 ring-inset ring-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white text-slate-600 ring-1 ring-inset ring-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700"
                     title="Descargar el historial como archivo de respaldo"
                   >
                     <Download size={14} aria-hidden="true" /> Exportar
                   </button>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white text-slate-600 ring-1 ring-inset ring-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white text-slate-600 ring-1 ring-inset ring-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700"
                     title="Cargar un historial desde un archivo de respaldo"
                   >
                     <Upload size={14} aria-hidden="true" /> Importar
@@ -581,7 +590,7 @@ const GeneradorGlosasSIGA = () => {
                     onChange={(e) => setBusquedaHistorial(e.target.value)}
                     placeholder="Buscar…"
                     aria-label="Buscar en el historial"
-                    className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
                   />
                 </div>
                 <div className="space-y-2 max-h-[560px] overflow-y-auto">
@@ -593,23 +602,23 @@ const GeneradorGlosasSIGA = () => {
                     historialFiltrado.map((glosa) => (
                       <div
                         key={glosa.id}
-                        className="group relative bg-white rounded-xl ring-1 ring-inset ring-slate-200 hover:ring-blue-400 transition-all"
+                        className="group relative bg-white rounded-xl ring-1 ring-inset ring-slate-200 hover:ring-blue-400 transition-all dark:bg-slate-800 dark:ring-slate-700 dark:hover:ring-blue-500"
                       >
                         <button
                           className="w-full text-left p-3 pr-8 cursor-pointer"
                           onClick={() => duplicarGlosa(glosa)}
                         >
                           <div className="text-xs text-slate-400 mb-1">{glosa.fecha}</div>
-                          <div className="text-sm text-slate-700 line-clamp-2">
+                          <div className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">
                             {glosa.texto.substring(0, 70)}…
                           </div>
-                          <div className="text-xs text-blue-600 mt-2 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                             Clic para duplicar
                           </div>
                         </button>
                         <button
                           onClick={() => eliminarDelHistorial(glosa.id)}
-                          className="absolute top-1.5 right-1.5 p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                          className="absolute top-1.5 right-1.5 p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:text-slate-500 dark:hover:bg-red-950/40 rounded-md transition-colors"
                           aria-label="Eliminar del historial"
                           title="Eliminar del historial"
                         >
@@ -636,14 +645,14 @@ const GeneradorGlosasSIGA = () => {
       {/* Diálogo de Confirmación */}
       {showConfirmDialog && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden" role="dialog" aria-modal="true">
-          <div className="bg-white p-6 rounded-2xl shadow-xl ring-1 ring-slate-200 max-w-md w-full">
+          <div className="bg-white p-6 rounded-2xl shadow-xl ring-1 ring-slate-200 max-w-md w-full dark:bg-slate-900 dark:ring-slate-700">
             <div className="flex items-center gap-3 mb-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100">
-                <AlertCircle size={20} className="text-amber-600" aria-hidden="true" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
+                <AlertCircle size={20} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
               </span>
-              <h3 className="text-base font-semibold text-slate-900">Confirmar acción</h3>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Confirmar acción</h3>
             </div>
-            <p className="text-sm text-slate-600 mb-6">{confirmMensaje}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">{confirmMensaje}</p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setShowConfirmDialog(false)} className="btn-secondary">
                 Cancelar

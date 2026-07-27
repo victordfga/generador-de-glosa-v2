@@ -8,14 +8,14 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-800 antialiased;
+    @apply bg-slate-50 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200;
   }
 }
 
 @layer components {
   /* Contenedor base tipo tarjeta: borde sutil de 1px y sombra suave */
   .card {
-    @apply bg-white rounded-2xl ring-1 ring-slate-200 shadow-sm;
+    @apply bg-white rounded-2xl ring-1 ring-slate-200 shadow-sm dark:bg-slate-900 dark:ring-slate-800;
   }
 
   /* Botones planos, sin gradientes, con estados sobrios */
@@ -23,31 +23,36 @@
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
            bg-blue-600 text-white transition-colors hover:bg-blue-700
            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500
-           disabled:opacity-50 disabled:cursor-not-allowed;
+           disabled:opacity-50 disabled:cursor-not-allowed
+           dark:focus-visible:ring-offset-slate-900;
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
            bg-white text-slate-700 ring-1 ring-inset ring-slate-300 transition-colors hover:bg-slate-50
            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400
-           disabled:opacity-50 disabled:cursor-not-allowed;
+           disabled:opacity-50 disabled:cursor-not-allowed
+           dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-700 dark:focus-visible:ring-offset-slate-900;
   }
 
   .btn-success {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
            bg-emerald-600 text-white transition-colors hover:bg-emerald-700
            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500
-           disabled:opacity-50 disabled:cursor-not-allowed;
+           disabled:opacity-50 disabled:cursor-not-allowed
+           dark:focus-visible:ring-offset-slate-900;
   }
 
   /* Campos de formulario: fondo blanco, borde sutil, foco con anillo suave */
   .input-field {
     @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900
            placeholder:text-slate-400 transition
-           focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20;
+           focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20
+           dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500
+           dark:focus:border-blue-500 dark:focus:ring-blue-500/30;
   }
 
   .input-field:disabled {
-    @apply bg-slate-50 text-slate-500 cursor-not-allowed;
+    @apply bg-slate-50 text-slate-500 cursor-not-allowed dark:bg-slate-900 dark:text-slate-500;
   }
 }
