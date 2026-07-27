@@ -1,169 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { Copy, Plus, Save, Trash2, FileText, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import {
+  Copy, Plus, Save, Trash2, FileText, Clock, AlertCircle, CheckCircle,
+  Printer, Search, Zap, Pencil, FilePlus, Download, Upload,
+} from 'lucide-react';
+import { TIPOS_GLOSA, CAMPOS_POR_TIPO } from '../data/tiposGlosa';
+import type { TipoGlosa } from '../data/tiposGlosa';
+import {
+  validarFormulario, generarTextoGlosa,
+} from '../lib/glosa';
+import type {
+  Item, FormData, GlosaHistorial, Plantilla, ValidationError,
+} from '../lib/glosa';
 
 // Constantes
-const MAX_HISTORIAL_ITEMS = 20;
+const MAX_HISTORIAL_ITEMS = 200;
 const PLANTILLA_NAME_LENGTH = 40;
-
-// Tipos de datos
-interface Item {
-  descripcion: string;
-  cantidad: string;
-  unidad: string;
-}
-
-interface FormData {
-  [key: string]: string;
-}
-
-interface GlosaHistorial {
-  id: number;
-  tipo: string;
-  texto: string;
-  fecha: string;
-  formData: FormData;
-  items: Item[];
-}
-
-interface Plantilla {
-  tipo: string;
-  formData: FormData;
-  items: Item[];
-  nombre: string;
-}
-
-interface ValidationError {
-  field: string;
-  message: string;
-}
+const ITEM_VACIO: Item = { descripcion: '', cantidad: '', unidad: '' };
 
 const GeneradorGlosasSIGA = () => {
   // Estados principales
-  const [tipoGlosa, setTipoGlosa] = useState('');
+  const [tipoGlosa, setTipoGlosa] = useState<TipoGlosa | ''>('');
   const [formData, setFormData] = useState<FormData>({});
   const [glosaGenerada, setGlosaGenerada] = useState('');
   const [historial, setHistorial] = useState<GlosaHistorial[]>([]);
   const [plantillas, setPlantillas] = useState<(Plantilla | null)[]>([null, null, null]);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [items, setItems] = useState<Item[]>([{ descripcion: '', cantidad: '', unidad: '' }]);
-  
-  // Estados para mejoras
+  const [items, setItems] = useState<Item[]>([{ ...ITEM_VACIO }]);
+  const [busquedaHistorial, setBusquedaHistorial] = useState('');
+
+  // Estados de flujo
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmMensaje, setConfirmMensaje] = useState('');
   const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Datos estáticos
-  const unidadesOrganicas = [
-    'Aldea Infantil Huarmaca',
-    'Aldea Infantil San Miguel de Piura',
-    'Archivo Regional Piura',
-    'Agua Bayovar',
-    'Centro de Servicio de Equipo Mecanizado',
-    'Centro Regional de Planeamiento Estratégico',
-    'Dirección de Estudios y Proyectos',
-    'Dirección de Obras',
-    'Dirección Regional de Comercio Exterior y Turismo',
-    'Dirección Regional de Energía y Minas',
-    'Dirección Regional de la Producción Piura',
-    'Dirección Regional de Trabajo y Promoción del Empleo',
-    'Gerencia de Desarrollo Económico',
-    'Gerencia de Recursos Naturales y Gestión del Medio Ambiente',
-    'Gerencia General Regional',
-    'Gerencia Regional de Desarrollo Social',
-    'Gerencia Regional de Infraestructura',
-    'Gerencia Regional de Recursos Naturales y Gestión del Medio Ambiente',
-    'Gerencia Regional de Saneamiento Físico Legal de la Propiedad Rural',
-    'Laboratorio de Suelos',
-    'Oficina de Abastecimiento y Servicios Auxiliares',
-    'Oficina de Comunicación e Imagen Institucional',
-    'Oficina de Contabilidad',
-    'Oficina de Control Patrimonial',
-    'Oficina de Programación y Seguimiento de Contratos de Inversión',
-    'Oficina de Programación Multianual de Inversiones',
-    'Oficina de Recursos Humanos',
-    'Oficina de Tecnologías de la Información',
-    'Oficina de Tesorería',
-    'Oficina Regional de Administración',
-    'Oficina Regional de Comunicaciones e Imagen Institucional',
-    'Oficina Regional de Seguridad y Defensa Nacional',
-    'Procuraduría Pública Regional',
-    'Programa de Apoyo Social',
-    'Programa de Desarrollo Social',
-    'Programa PIMA',
-    'Secretaría de Consejo Regional',
-    'Secretaría General de la Gobernación Regional',
-    'Secretaría Técnica de la Sede Central del Gobierno Regional de Piura',
-    'Sub Gerencia Regional de Desarrollo Institucional',
-    'Sub Gerencia Regional de Gestión de Recursos Naturales',
-    'Sub Gerencia Regional de Gestión Ambiental',
-    'Sub Gerencia Regional de Normas, Monitoreo y Evaluación GRI',
-    'Sub Gerencia Regional de Planeamiento, Programación e Inversión',
-    'Sub Gerencia Regional de Promoción de Inversiones',
-    'Unidad Formuladora'
-  ];
-
-  const codigosItem = [
-    'SERVICIO DE ASISTENCIA TÉCNICA EN INGENIERÍA',
-    'SERVICIO DE ASISTENCIA TÉCNICA ADMINISTRATIVA',
-    'SERVICIO ESPECIALIZADO EN TEMAS DE DERECHO',
-    'SERVICIO DE CONSULTORÍA'
-  ];
-
-  const tiposDocumento = ['MEMORÁNDUM', 'MEMORANDO', 'INFORME', 'CARTA'];
-
-  const camposPorTipo = {
-    'orden-servicio-consultoria': [
-      { id: 'descripcionGeneral', label: 'Descripción General del Servicio', tipo: 'textarea', required: true },
-      { id: 'descripcionItem', label: 'Descripción del Item en el Sistema', tipo: 'text', required: true },
-      { id: 'unidadOrganica', label: 'Unidad Orgánica Solicitante', tipo: 'selectCustom', opciones: unidadesOrganicas, required: true },
-      { id: 'detalleServicio', label: 'Detalle Específico del Servicio', tipo: 'textarea', required: true },
-      { id: 'plazo', label: 'Plazo de Ejecución (en días)', tipo: 'text', required: true },
-      { id: 'garantia', label: 'Descripción de la Garantía', tipo: 'text', placeholder: 'Ej: DURANTE EL SERVICIO' },
-      { id: 'docReferencia', label: 'Documento de Referencia', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N°282-2025-GRP/490000', required: true },
-      { id: 'docAtendido', label: 'Documento Atendido', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N° 331-2025-GRP/490000', required: true },
-      { id: 'pedidoInterno', label: 'Nro. de Pedido Interno', tipo: 'text', required: true },
-      { id: 'certificado', label: 'Nro. de Certificado Presupuestal', tipo: 'text', required: true },
-      { id: 'ordenServicio', label: 'Nro. de Orden de Servicio (O/S)', tipo: 'text', required: true }
-    ],
-    'orden-servicio-recurrente': [
-      { id: 'descripcionGeneral', label: 'Descripción General del Servicio', tipo: 'textarea', required: true },
-      { id: 'descripcionItem', label: 'Descripción del Item en el Sistema', tipo: 'text', required: true },
-      { id: 'unidadOrganica', label: 'Unidad Orgánica Solicitante', tipo: 'selectCustom', opciones: unidadesOrganicas, required: true },
-      { id: 'detalleServicio', label: 'Detalle Específico del Servicio', tipo: 'textarea', required: true },
-      { id: 'periodo', label: 'Periodo del Servicio', tipo: 'text', placeholder: 'Ej: SEPTIEMBRE, OCTUBRE, NOVIEMBRE Y DICIEMBRE DEL 2025', required: true },
-      { id: 'docReferencia', label: 'Documento de Referencia', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N°282-2025-GRP/490000', required: true },
-      { id: 'docAtendido', label: 'Documento Atendido', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N° 331-2025-GRP/490000', required: true },
-      { id: 'pedidoInterno', label: 'Nro. de Pedido Interno', tipo: 'text', required: true },
-      { id: 'certificado', label: 'Nro. de Certificado Presupuestal', tipo: 'text', required: true },
-      { id: 'ordenServicio', label: 'Nro. de Orden de Servicio (O/S)', tipo: 'text', required: true }
-    ],
-    'orden-compra': [
-      { id: 'descripcionGeneral', label: 'Descripción General del Bien', tipo: 'textarea', required: true },
-      { id: 'unidadOrganica', label: 'Unidad Orgánica Solicitante', tipo: 'selectCustom', opciones: unidadesOrganicas, required: true },
-      { id: 'detalleBien', label: 'Detalle Específico del Bien', tipo: 'textarea', required: true },
-      { id: 'plazo', label: 'Plazo de Entrega (en días)', tipo: 'text', required: true },
-      { id: 'garantia', label: 'Descripción de la Garantía', tipo: 'text', required: true },
-      { id: 'docReferencia', label: 'Documento de Referencia', tipo: 'text', placeholder: 'Ej: MEMORÁNDUM N°2843-2025/GRP-410000', required: true },
-      { id: 'docAtendido', label: 'Documento Atendido', tipo: 'text', placeholder: 'Ej: MEMORANDO N°922-2025/GRP-100020', required: true },
-      { id: 'pedidoInterno', label: 'Nro. de Pedido Interno', tipo: 'text', required: true },
-      { id: 'certificado', label: 'Nro. de Certificado Presupuestal', tipo: 'text', required: true },
-      { id: 'ordenCompra', label: 'Nro. de Orden de Compra (O/C)', tipo: 'text', required: true }
-    ],
-    'pago-contrato': [
-      { id: 'descripcionContrato', label: 'Descripción del Servicio del Contrato', tipo: 'textarea', required: true },
-      { id: 'periodoValorizacion', label: 'Periodo o Valorización a Pagar', tipo: 'text', required: true },
-      { id: 'docConformidad', label: 'Documento de Conformidad', tipo: 'text', required: true },
-      { id: 'docAtendido', label: 'Documento Atendido', tipo: 'text', placeholder: 'Ej: INFORME N° 3148-2025/GRP-480400-AASS', required: true },
-      { id: 'contratoNumero', label: 'Nro. de Contrato Original', tipo: 'text', required: true }
-    ]
-  };
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Cargar datos del localStorage al inicializar
   useEffect(() => {
     const savedHistorial = localStorage.getItem('glosas-historial');
     const savedPlantillas = localStorage.getItem('glosas-plantillas');
-    
+
     if (savedHistorial) {
       try {
         setHistorial(JSON.parse(savedHistorial));
@@ -171,7 +48,7 @@ const GeneradorGlosasSIGA = () => {
         console.error('Error al cargar historial:', error);
       }
     }
-    
+
     if (savedPlantillas) {
       try {
         setPlantillas(JSON.parse(savedPlantillas));
@@ -181,7 +58,7 @@ const GeneradorGlosasSIGA = () => {
     }
   }, []);
 
-  // Guardar en localStorage cuando cambie el historial o plantillas
+  // Persistir historial y plantillas
   useEffect(() => {
     localStorage.setItem('glosas-historial', JSON.stringify(historial));
   }, [historial]);
@@ -190,179 +67,91 @@ const GeneradorGlosasSIGA = () => {
     localStorage.setItem('glosas-plantillas', JSON.stringify(plantillas));
   }, [plantillas]);
 
-  // Funciones de validación
-  const validarFormulario = (): ValidationError[] => {
-    const errores: ValidationError[] = [];
-    
-    if (!tipoGlosa) {
-      errores.push({ field: 'tipoGlosa', message: 'Debe seleccionar un tipo de glosa' });
-      return errores;
-    }
+  // Historial filtrado por búsqueda
+  const historialFiltrado = useMemo(() => {
+    const q = busquedaHistorial.trim().toLowerCase();
+    if (!q) return historial;
+    return historial.filter(
+      (g) => g.texto.toLowerCase().includes(q) || g.tipo.toLowerCase().includes(q),
+    );
+  }, [historial, busquedaHistorial]);
 
-    const campos = camposPorTipo[tipoGlosa as keyof typeof camposPorTipo];
-    if (!campos) return errores;
-
-    campos.forEach(campo => {
-      if (campo.required && !formData[campo.id]?.trim()) {
-        errores.push({ 
-          field: campo.id, 
-          message: `${campo.label} es requerido` 
-        });
-      }
-    });
-
-    // Validar items para orden de compra
-    if (tipoGlosa === 'orden-compra') {
-      const itemsValidos = items.filter(item => item.descripcion.trim());
-      if (itemsValidos.length === 0) {
-        errores.push({ 
-          field: 'items', 
-          message: 'Debe agregar al menos un ítem' 
-        });
-      }
-    }
-
-    return errores;
-  };
-
-  // Funciones de gestión de ítems
-  const agregarItem = () => {
-    setItems([...items, { descripcion: '', cantidad: '', unidad: '' }]);
-  };
+  // Gestión de ítems (inmutable)
+  const agregarItem = () => setItems((prev) => [...prev, { ...ITEM_VACIO }]);
 
   const eliminarItem = (index: number) => {
-    if (items.length > 1) {
-      setItems(items.filter((_, i) => i !== index));
-    }
+    setItems((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   };
 
   const actualizarItem = (index: number, campo: keyof Item, valor: string) => {
-    const nuevosItems = [...items];
-    nuevosItems[index][campo] = valor;
-    setItems(nuevosItems);
+    setItems((prev) => prev.map((item, i) => (i === index ? { ...item, [campo]: valor } : item)));
   };
 
   const handleInputChange = (campo: string, valor: string) => {
-    setFormData({ ...formData, [campo]: valor });
-    // Limpiar errores de validación del campo
-    setValidationErrors(prev => prev.filter(error => error.field !== campo));
+    setFormData((prev) => ({ ...prev, [campo]: valor }));
+    setValidationErrors((prev) => prev.filter((error) => error.field !== campo));
   };
 
-  // Función para mostrar confirmación
+  // Confirmación reutilizable
   const mostrarConfirmacion = (accion: () => void, mensaje: string) => {
     setConfirmAction(() => accion);
+    setConfirmMensaje(mensaje);
     setShowConfirmDialog(true);
   };
 
-  // Función para ejecutar acción confirmada
   const ejecutarAccionConfirmada = () => {
-    if (confirmAction) {
-      confirmAction();
-    }
+    confirmAction?.();
     setShowConfirmDialog(false);
     setConfirmAction(null);
   };
 
-  // Generación de glosas mejorada
+  const resetFormulario = () => {
+    setFormData({});
+    setGlosaGenerada('');
+    setItems([{ ...ITEM_VACIO }]);
+    setValidationErrors([]);
+  };
+
+  const hayDatosEnFormulario = () =>
+    Object.values(formData).some((v) => v?.trim()) ||
+    items.some((it) => it.descripcion.trim() || it.cantidad.trim() || it.unidad.trim());
+
+  // Al cambiar el tipo: solo confirmar si hay datos que se perderían
+  const cambiarTipoGlosa = (nuevoTipo: TipoGlosa | '') => {
+    const aplicar = () => {
+      setTipoGlosa(nuevoTipo);
+      resetFormulario();
+    };
+    if (hayDatosEnFormulario()) {
+      mostrarConfirmacion(aplicar, 'Cambiar el tipo de glosa borrará los datos actuales. ¿Desea continuar?');
+    } else {
+      aplicar();
+    }
+  };
+
   const generarGlosa = async () => {
     setIsLoading(true);
     setValidationErrors([]);
 
     try {
-      const errores = validarFormulario();
+      const errores = validarFormulario(tipoGlosa, formData, items);
       if (errores.length > 0) {
         setValidationErrors(errores);
-        setIsLoading(false);
         return;
       }
 
-      let glosa = '';
-
-      if (tipoGlosa === 'orden-servicio-recurrente') {
-        glosa = `POR LA CONTRATACIÓN DE ${formData.descripcionGeneral?.toUpperCase() || ''}
-- ${formData.descripcionItem?.toUpperCase() || ''}
-PEDIDO DE SERVICIO SOLICITADO POR ${formData.unidadOrganica?.toUpperCase() || ''}.
-
-DETALLE DEL SERVICIO: ${formData.detalleServicio?.toUpperCase() || ''}
-
-PERIODO: ${formData.periodo?.toUpperCase() || ''}
-
-REF.: ${formData.docReferencia?.toUpperCase() || ''}
-
-SEGÚN DOCUMENTACIÓN: ${formData.docAtendido?.toUpperCase() || ''}
-
-PEDIDO DE SERVICIO N° ${formData.pedidoInterno || ''}
-
-CERTIFICADO N° ${formData.certificado || ''} / OS N° ${formData.ordenServicio || ''}`;
-      } 
-      else if (tipoGlosa === 'orden-servicio-consultoria') {
-        glosa = `POR LA CONTRATACIÓN DE ${formData.descripcionGeneral?.toUpperCase() || ''}
-- ${formData.descripcionItem?.toUpperCase() || ''}
-PEDIDO DE SERVICIO SOLICITADO POR ${formData.unidadOrganica?.toUpperCase() || ''}.
-
-DETALLE DEL SERVICIO: ${formData.detalleServicio?.toUpperCase() || ''}
-
-PLAZO DE EJECUCIÓN: ${formData.plazo || ''} DÍAS CALENDARIOS.
-
-REF.: ${formData.docReferencia?.toUpperCase() || ''}
-
-SEGÚN DOCUMENTACIÓN: ${formData.docAtendido?.toUpperCase() || ''}
-
-PEDIDO DE SERVICIO N° ${formData.pedidoInterno || ''}
-
-CERTIFICADO N° ${formData.certificado || ''} / OS N° ${formData.ordenServicio || ''}`;
-        
-        if (formData.garantia) {
-          glosa += `\n\nGARANTÍA: ${formData.garantia?.toUpperCase()}`;
-        }
-      } 
-      else if (tipoGlosa === 'orden-compra') {
-        glosa = `POR LA CONTRATACIÓN DE PROVEEDOR PARA LA ADQUISICIÓN DE ${formData.descripcionGeneral?.toUpperCase() || ''}`;
-        
-        items.forEach(item => {
-          if (item.descripcion) {
-            glosa += `\n- ${item.descripcion?.toUpperCase()}   ${item.cantidad || ''} ${item.unidad?.toUpperCase() || ''}`;
-          }
-        });
-        
-        glosa += `\n\nPEDIDO DE COMPRA SOLICITADO POR ${formData.unidadOrganica?.toUpperCase() || ''}.
-
-PLAZO DE ENTREGA: ${formData.plazo || ''} DÍAS CALENDARIOS.
-
-GARANTÍA: ${formData.garantia?.toUpperCase() || ''}
-
-REF.: ${formData.docReferencia?.toUpperCase() || ''}
-
-SEGÚN DOCUMENTACIÓN: ${formData.docAtendido?.toUpperCase() || ''}
-
-PEDIDO DE COMPRA N° ${formData.pedidoInterno || ''}
-
-CERTIFICADO N° ${formData.certificado || ''} / OC N° ${formData.ordenCompra || ''}`;
-      } 
-      else if (tipoGlosa === 'pago-contrato') {
-        glosa = `POR EL PAGO DE VALORIZACIÓN DE ${formData.descripcionContrato?.toUpperCase() || ''}
-
-PERIODO O VALORIZACIÓN: ${formData.periodoValorizacion?.toUpperCase() || ''}
-
-DOCUMENTO DE CONFORMIDAD: ${formData.docConformidad?.toUpperCase() || ''}
-
-SEGÚN DOCUMENTACIÓN: ${formData.docAtendido?.toUpperCase() || ''}
-
-CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
-      }
-
+      const glosa = generarTextoGlosa(tipoGlosa as TipoGlosa, formData, items);
       setGlosaGenerada(glosa);
-      
+
       const nuevaGlosa: GlosaHistorial = {
         id: Date.now(),
-        tipo: tipoGlosa,
+        tipo: tipoGlosa as TipoGlosa,
         texto: glosa,
         fecha: new Date().toLocaleString('es-PE'),
         formData: { ...formData },
-        items: tipoGlosa === 'orden-compra' ? [...items] : []
+        items: tipoGlosa === 'orden-compra' ? items.map((it) => ({ ...it })) : [],
       };
-      
-      setHistorial([nuevaGlosa, ...historial.slice(0, MAX_HISTORIAL_ITEMS - 1)]);
+      setHistorial((prev) => [nuevaGlosa, ...prev.slice(0, MAX_HISTORIAL_ITEMS - 1)]);
     } catch (error) {
       console.error('Error al generar glosa:', error);
       setValidationErrors([{ field: 'general', message: 'Error al generar la glosa. Intente nuevamente.' }]);
@@ -371,7 +160,6 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
     }
   };
 
-  // Copiar glosa con manejo de errores
   const copiarGlosa = async () => {
     try {
       await navigator.clipboard.writeText(glosaGenerada);
@@ -383,48 +171,86 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
     }
   };
 
+  const imprimirGlosa = () => window.print();
+
+  const eliminarDelHistorial = (id: number) => {
+    setHistorial((prev) => prev.filter((g) => g.id !== id));
+  };
+
+  // Exportar el historial a un archivo JSON (respaldo personal)
+  const exportarHistorial = () => {
+    const blob = new Blob([JSON.stringify(historial, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `glosas-historial-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Importar un historial desde archivo, fusionando por id (sin duplicar)
+  const importarHistorial = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string);
+        if (!Array.isArray(data)) throw new Error('Formato inválido');
+        setHistorial((prev) => {
+          const porId = new Map<number, GlosaHistorial>();
+          [...prev, ...data].forEach((g: GlosaHistorial) => {
+            if (g && typeof g.id === 'number' && typeof g.texto === 'string') {
+              porId.set(g.id, g);
+            }
+          });
+          return Array.from(porId.values())
+            .sort((a, b) => b.id - a.id)
+            .slice(0, MAX_HISTORIAL_ITEMS);
+        });
+      } catch {
+        setValidationErrors([{ field: 'general', message: 'No se pudo importar: el archivo no es un historial válido.' }]);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const duplicarGlosa = (glosa: GlosaHistorial) => {
     setTipoGlosa(glosa.tipo);
     setFormData(glosa.formData);
-    if (glosa.items && glosa.items.length > 0) {
-      setItems(glosa.items);
-    }
+    setItems(glosa.items && glosa.items.length > 0 ? glosa.items.map((it) => ({ ...it })) : [{ ...ITEM_VACIO }]);
     setGlosaGenerada('');
     setValidationErrors([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const guardarPlantilla = (index: number) => {
-    const nuevasPlantillas = [...plantillas];
-    const nombrePlantilla = formData.descripcionGeneral?.substring(0, PLANTILLA_NAME_LENGTH) || 'Plantilla sin nombre';
-    nuevasPlantillas[index] = {
-      tipo: tipoGlosa,
-      formData: { ...formData },
-      items: tipoGlosa === 'orden-compra' ? [...items] : [],
-      nombre: nombrePlantilla + (formData.descripcionGeneral && formData.descripcionGeneral.length > PLANTILLA_NAME_LENGTH ? '...' : '')
-    };
-    setPlantillas(nuevasPlantillas);
+    if (!tipoGlosa) return;
+    const base = formData.descripcionGeneral || formData.descripcionContrato || 'Plantilla sin nombre';
+    const nombre = base.substring(0, PLANTILLA_NAME_LENGTH) + (base.length > PLANTILLA_NAME_LENGTH ? '...' : '');
+    setPlantillas((prev) => {
+      const next = [...prev];
+      next[index] = {
+        tipo: tipoGlosa,
+        formData: { ...formData },
+        items: tipoGlosa === 'orden-compra' ? items.map((it) => ({ ...it })) : [],
+        nombre,
+      };
+      return next;
+    });
   };
 
   const cargarPlantilla = (plantilla: Plantilla) => {
-    if (plantilla) {
-      setTipoGlosa(plantilla.tipo);
-      setFormData(plantilla.formData);
-      if (plantilla.items && plantilla.items.length > 0) {
-        setItems(plantilla.items);
-      }
-      setGlosaGenerada('');
-      setValidationErrors([]);
-    }
+    setTipoGlosa(plantilla.tipo);
+    setFormData(plantilla.formData);
+    setItems(plantilla.items && plantilla.items.length > 0 ? plantilla.items.map((it) => ({ ...it })) : [{ ...ITEM_VACIO }]);
+    setGlosaGenerada('');
+    setValidationErrors([]);
   };
 
   const limpiarFormulario = () => {
-    mostrarConfirmacion(() => {
-      setFormData({});
-      setGlosaGenerada('');
-      setItems([{ descripcion: '', cantidad: '', unidad: '' }]);
-      setValidationErrors([]);
-    }, '¿Está seguro de que desea limpiar todos los datos del formulario?');
+    mostrarConfirmacion(resetFormulario, '¿Está seguro de que desea limpiar todos los datos del formulario?');
   };
 
   const modificarGlosa = () => {
@@ -432,53 +258,55 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
     setValidationErrors([]);
   };
 
+  const camposActuales = tipoGlosa ? CAMPOS_POR_TIPO[tipoGlosa] : [];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 p-4 print:bg-white print:p-0">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <FileText size={36} />
+        <div className="bg-white rounded-lg shadow-2xl overflow-hidden print:shadow-none">
+          {/* Encabezado institucional */}
+          <header className="bg-gradient-to-r from-blue-700 to-sky-700 p-6 text-white print:hidden">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+              <FileText size={36} aria-hidden="true" />
               Generador de Glosas SIGA
             </h1>
-            <p className="mt-2 text-blue-100">Sistema automatizado para registro de glosas - Gobierno Regional de Piura</p>
-          </div>
+            <p className="mt-2 text-blue-100">
+              Municipalidad Distrital 26 de Octubre · Oficina de Abastecimiento
+            </p>
+          </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 print:block print:p-0">
             {/* Panel Principal */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6 print:space-y-0">
               {/* Selección de Tipo */}
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg border-2 border-indigo-200">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+              <div className="bg-gradient-to-r from-sky-50 to-blue-50 p-4 rounded-lg border-2 border-sky-200 print:hidden">
+                <label htmlFor="tipoGlosa" className="block text-sm font-bold text-gray-700 mb-2">
                   TIPO DE GLOSA A GENERAR
                 </label>
                 <select
+                  id="tipoGlosa"
                   value={tipoGlosa}
-                  onChange={(e) => {
-                    setTipoGlosa(e.target.value);
-                    limpiarFormulario();
-                  }}
+                  onChange={(e) => cambiarTipoGlosa(e.target.value as TipoGlosa | '')}
                   className="input-field font-medium"
                 >
                   <option value="">-- Seleccione el tipo de glosa --</option>
-                  <option value="orden-servicio-consultoria">Orden de Servicio (General / Consultoría)</option>
-                  <option value="orden-servicio-recurrente">Orden de Servicio (Locador / Recurrente)</option>
-                  <option value="orden-compra">Orden de Compra</option>
-                  <option value="pago-contrato">Pago de Contrato / Valorización</option>
+                  {TIPOS_GLOSA.map((t) => (
+                    <option key={t.valor} value={t.valor}>{t.etiqueta}</option>
+                  ))}
                 </select>
               </div>
 
               {/* Errores de validación */}
               {validationErrors.length > 0 && (
-                <div className="bg-red-50 border-2 border-red-300 p-4 rounded-lg">
+                <div className="bg-red-50 border-2 border-red-300 p-4 rounded-lg print:hidden" role="alert">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle size={20} className="text-red-600" />
+                    <AlertCircle size={20} className="text-red-600" aria-hidden="true" />
                     <h3 className="font-bold text-red-800">Errores de validación</h3>
                   </div>
                   <ul className="space-y-1">
                     {validationErrors.map((error, index) => (
                       <li key={index} className="text-red-700 text-sm flex items-center gap-2">
-                        <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                        <span className="w-2 h-2 bg-red-500 rounded-full" aria-hidden="true"></span>
                         {error.message}
                       </li>
                     ))}
@@ -487,19 +315,20 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
               )}
 
               {/* Plantillas Rápidas */}
-              {plantillas.some(p => p !== null) && (
-                <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-300">
+              {plantillas.some((p) => p !== null) && (
+                <div className="bg-amber-50 p-4 rounded-lg border-2 border-amber-300 print:hidden">
                   <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-                    <Save size={20} className="text-yellow-600" />
+                    <Save size={20} className="text-amber-600" aria-hidden="true" />
                     Plantillas Rápidas
                   </h3>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {plantillas.map((plantilla, index) => (
                       plantilla && (
                         <button
                           key={index}
                           onClick={() => cargarPlantilla(plantilla)}
-                          className="p-2 bg-white border-2 border-yellow-400 rounded hover:bg-yellow-100 text-xs text-left truncate font-medium transition-colors"
+                          className="p-2 bg-white border-2 border-amber-400 rounded hover:bg-amber-100 text-xs text-left truncate font-medium transition-colors"
+                          title={plantilla.nombre}
                         >
                           {plantilla.nombre}
                         </button>
@@ -511,7 +340,7 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
 
               {/* Formulario Dinámico */}
               {tipoGlosa && (
-                <div className="space-y-4">
+                <div className="space-y-4 print:hidden">
                   <div className="flex justify-between items-center">
                     <h2 className="text-xl font-bold text-gray-800">Datos de la Glosa</h2>
                     <button
@@ -522,74 +351,70 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
                     </button>
                   </div>
 
-                  {camposPorTipo[tipoGlosa as keyof typeof camposPorTipo]?.map(campo => (
-                    <div key={campo.id}>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">
-                        {campo.label} {campo.required && <span className="text-red-500">*</span>}
-                      </label>
-                      {campo.tipo === 'textarea' ? (
-                        <textarea
-                          value={formData[campo.id] || ''}
-                          onChange={(e) => handleInputChange(campo.id, e.target.value)}
-                          placeholder={campo.placeholder}
-                          disabled={glosaGenerada !== ''}
-                          className={`input-field ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                          rows={3}
-                        />
-                      ) : campo.tipo === 'selectCustom' ? (
-                        <div className="space-y-2">
-                          <select
+                  {camposActuales.map((campo) => {
+                    const disabled = glosaGenerada !== '';
+                    const disabledCls = disabled ? 'bg-gray-100 cursor-not-allowed' : '';
+                    return (
+                      <div key={campo.id}>
+                        <label htmlFor={campo.id} className="block text-sm font-bold text-gray-700 mb-1">
+                          {campo.label} {campo.required && <span className="text-red-500">*</span>}
+                        </label>
+                        {campo.tipo === 'textarea' ? (
+                          <textarea
+                            id={campo.id}
                             value={formData[campo.id] || ''}
-                            onChange={(e) => {
-                              if (e.target.value === '__CUSTOM__') {
-                                handleInputChange(campo.id, '');
-                              } else {
-                                handleInputChange(campo.id, e.target.value);
+                            onChange={(e) => handleInputChange(campo.id, e.target.value)}
+                            placeholder={campo.placeholder}
+                            disabled={disabled}
+                            className={`input-field ${disabledCls}`}
+                            rows={3}
+                          />
+                        ) : campo.tipo === 'selectCustom' ? (
+                          <div className="space-y-2">
+                            <select
+                              id={campo.id}
+                              value={
+                                formData[campo.id] === undefined
+                                  ? ''
+                                  : campo.opciones?.includes(formData[campo.id])
+                                    ? formData[campo.id]
+                                    : '__CUSTOM__'
                               }
-                            }}
-                            disabled={glosaGenerada !== ''}
-                            className={`input-field ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                          >
-                            <option value="">-- Seleccione --</option>
-                            {campo.opciones.map(opcion => (
-                              <option key={opcion} value={opcion}>{opcion}</option>
-                            ))}
-                            <option value="__CUSTOM__">✏️ Escribir otro...</option>
-                          </select>
-                          {(formData[campo.id] === '' || !campo.opciones.includes(formData[campo.id])) && formData[campo.id] !== undefined && glosaGenerada === '' && (
-                            <input
-                              type="text"
-                              value={formData[campo.id] || ''}
-                              onChange={(e) => handleInputChange(campo.id, e.target.value)}
-                              placeholder={`Escriba ${campo.label.toLowerCase()}`}
-                              className="input-field bg-blue-50 border-blue-300"
-                            />
-                          )}
-                        </div>
-                      ) : campo.tipo === 'select' ? (
-                        <select
-                          value={formData[campo.id] || ''}
-                          onChange={(e) => handleInputChange(campo.id, e.target.value)}
-                          disabled={glosaGenerada !== ''}
-                          className={`input-field ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                        >
-                          <option value="">-- Seleccione --</option>
-                          {campo.opciones.map(opcion => (
-                            <option key={opcion} value={opcion}>{opcion}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          value={formData[campo.id] || ''}
-                          onChange={(e) => handleInputChange(campo.id, e.target.value)}
-                          placeholder={campo.placeholder}
-                          disabled={glosaGenerada !== ''}
-                          className={`input-field ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                        />
-                      )}
-                    </div>
-                  ))}
+                              onChange={(e) => handleInputChange(campo.id, e.target.value === '__CUSTOM__' ? '' : e.target.value)}
+                              disabled={disabled}
+                              className={`input-field ${disabledCls}`}
+                            >
+                              <option value="">-- Seleccione --</option>
+                              {campo.opciones?.map((opcion) => (
+                                <option key={opcion} value={opcion}>{opcion}</option>
+                              ))}
+                              <option value="__CUSTOM__">✏️ Escribir otro...</option>
+                            </select>
+                            {formData[campo.id] !== undefined && !campo.opciones?.includes(formData[campo.id]) && !disabled && (
+                              <input
+                                type="text"
+                                value={formData[campo.id] || ''}
+                                onChange={(e) => handleInputChange(campo.id, e.target.value)}
+                                placeholder={`Escriba ${campo.label.toLowerCase()}`}
+                                className="input-field bg-blue-50 border-blue-300"
+                                aria-label={campo.label}
+                              />
+                            )}
+                          </div>
+                        ) : (
+                          <input
+                            id={campo.id}
+                            type="text"
+                            value={formData[campo.id] || ''}
+                            onChange={(e) => handleInputChange(campo.id, e.target.value)}
+                            placeholder={campo.placeholder}
+                            disabled={disabled}
+                            className={`input-field ${disabledCls}`}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
 
                   {/* Items para Orden de Compra */}
                   {tipoGlosa === 'orden-compra' && (
@@ -599,21 +424,22 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
                         {glosaGenerada === '' && (
                           <button
                             onClick={agregarItem}
-                            className="flex items-center gap-1 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm font-medium transition-colors"
+                            className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors"
                           >
-                            <Plus size={16} /> Agregar Ítem
+                            <Plus size={16} aria-hidden="true" /> Agregar Ítem
                           </button>
                         )}
                       </div>
                       {items.map((item, index) => (
-                        <div key={index} className="grid grid-cols-12 gap-2 mb-2">
+                        <div key={index} className="grid grid-cols-2 sm:grid-cols-12 gap-2 mb-2">
                           <input
                             type="text"
                             value={item.descripcion}
                             onChange={(e) => actualizarItem(index, 'descripcion', e.target.value)}
                             placeholder="Descripción del ítem"
                             disabled={glosaGenerada !== ''}
-                            className={`col-span-6 p-2 border rounded ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            aria-label={`Descripción del ítem ${index + 1}`}
+                            className={`col-span-2 sm:col-span-6 p-2 border rounded ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                           />
                           <input
                             type="text"
@@ -621,7 +447,8 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
                             onChange={(e) => actualizarItem(index, 'cantidad', e.target.value)}
                             placeholder="Cant."
                             disabled={glosaGenerada !== ''}
-                            className={`col-span-2 p-2 border rounded ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            aria-label={`Cantidad del ítem ${index + 1}`}
+                            className={`col-span-1 sm:col-span-2 p-2 border rounded ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                           />
                           <input
                             type="text"
@@ -629,14 +456,16 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
                             onChange={(e) => actualizarItem(index, 'unidad', e.target.value)}
                             placeholder="UND"
                             disabled={glosaGenerada !== ''}
-                            className={`col-span-3 p-2 border rounded ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            aria-label={`Unidad del ítem ${index + 1}`}
+                            className={`col-span-1 sm:col-span-3 p-2 border rounded ${glosaGenerada !== '' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                           />
                           {items.length > 1 && glosaGenerada === '' && (
                             <button
                               onClick={() => eliminarItem(index)}
-                              className="col-span-1 p-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                              className="col-span-2 sm:col-span-1 p-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors flex items-center justify-center"
+                              aria-label={`Eliminar ítem ${index + 1}`}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={16} aria-hidden="true" />
                             </button>
                           )}
                         </div>
@@ -650,37 +479,32 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
                       <button
                         onClick={generarGlosa}
                         disabled={isLoading}
-                        className={`btn-primary flex-1 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`btn-primary flex-1 flex items-center justify-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        {isLoading ? '⏳ GENERANDO...' : '⚡ GENERAR GLOSA'}
+                        <Zap size={20} aria-hidden="true" />
+                        {isLoading ? 'GENERANDO...' : 'GENERAR GLOSA'}
                       </button>
                     </div>
                   ) : (
                     <div className="flex gap-3">
-                      <button
-                        onClick={modificarGlosa}
-                        className="btn-secondary flex-1"
-                      >
-                        ✏️ MODIFICAR GLOSA
+                      <button onClick={modificarGlosa} className="btn-secondary flex-1 flex items-center justify-center gap-2">
+                        <Pencil size={20} aria-hidden="true" /> MODIFICAR GLOSA
                       </button>
-                      <button
-                        onClick={limpiarFormulario}
-                        className="btn-success flex-1"
-                      >
-                        ➕ NUEVA GLOSA
+                      <button onClick={limpiarFormulario} className="btn-success flex-1 flex items-center justify-center gap-2">
+                        <FilePlus size={20} aria-hidden="true" /> NUEVA GLOSA
                       </button>
                     </div>
                   )}
 
                   {/* Guardar como Plantilla */}
                   {glosaGenerada && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm text-gray-600 py-2">Guardar como plantilla:</span>
-                      {[0, 1, 2].map(index => (
+                      {[0, 1, 2].map((index) => (
                         <button
                           key={index}
                           onClick={() => guardarPlantilla(index)}
-                          className="px-3 py-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 text-sm font-medium transition-colors"
+                          className="px-3 py-2 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 text-sm font-medium transition-colors"
                         >
                           Slot {index + 1}
                         </button>
@@ -692,20 +516,33 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
 
               {/* Glosa Generada */}
               {glosaGenerada && (
-                <div className="bg-green-50 p-4 rounded-lg border-2 border-green-300">
-                  <div className="flex justify-between items-center mb-3">
+                <div className="bg-green-50 p-4 rounded-lg border-2 border-green-300 print:border-0 print:bg-white print:p-0">
+                  <div className="flex justify-between items-center mb-3 print:hidden">
                     <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                      <CheckCircle size={20} className="text-green-600" />
+                      <CheckCircle size={20} className="text-green-600" aria-hidden="true" />
                       Glosa Generada
                     </h3>
-                    <button
-                      onClick={copiarGlosa}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold shadow-lg transition-colors"
-                    >
-                      <Copy size={20} /> COPIAR
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={imprimirGlosa}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 font-bold shadow transition-colors"
+                      >
+                        <Printer size={20} aria-hidden="true" /> IMPRIMIR / PDF
+                      </button>
+                      <button
+                        onClick={copiarGlosa}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold shadow-lg transition-colors"
+                      >
+                        <Copy size={20} aria-hidden="true" /> COPIAR
+                      </button>
+                    </div>
                   </div>
-                  <pre className="bg-white p-4 rounded border border-green-300 whitespace-pre-wrap text-sm font-mono">
+                  <div className="hidden print:block mb-4 text-center">
+                    <p className="font-bold uppercase">Municipalidad Distrital 26 de Octubre</p>
+                    <p className="text-sm">Oficina de Abastecimiento · Glosa SIGA</p>
+                    <hr className="my-2" />
+                  </div>
+                  <pre className="glosa-print-area bg-white p-4 rounded border border-green-300 whitespace-pre-wrap text-sm font-mono print:border-0 print:text-base">
                     {glosaGenerada}
                   </pre>
                 </div>
@@ -713,59 +550,103 @@ CONTRATO N° ${formData.contratoNumero?.toUpperCase() || ''}`;
             </div>
 
             {/* Panel Lateral - Historial */}
-            <div className="lg:col-span-1">
+            <aside className="lg:col-span-1 print:hidden">
               <div className="bg-gray-50 rounded-lg border-2 border-gray-300 p-4 sticky top-4">
-                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  <Clock size={20} className="text-blue-600" />
-                  Historial de Sesión ({historial.length}/{MAX_HISTORIAL_ITEMS})
+                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                  <Clock size={20} className="text-blue-600" aria-hidden="true" />
+                  Historial ({historial.length}/{MAX_HISTORIAL_ITEMS})
                 </h3>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={exportarHistorial}
+                    disabled={historial.length === 0}
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    title="Descargar el historial como archivo de respaldo"
+                  >
+                    <Download size={14} aria-hidden="true" /> Exportar
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-white border-2 border-blue-600 text-blue-700 rounded text-xs font-medium hover:bg-blue-50 transition-colors"
+                    title="Cargar un historial desde un archivo de respaldo"
+                  >
+                    <Upload size={14} aria-hidden="true" /> Importar
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={importarHistorial}
+                    className="hidden"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="relative mb-3">
+                  <Search size={16} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={busquedaHistorial}
+                    onChange={(e) => setBusquedaHistorial(e.target.value)}
+                    placeholder="Buscar en el historial..."
+                    aria-label="Buscar en el historial"
+                    className="w-full pl-8 pr-2 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
                 <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                  {historial.length === 0 ? (
+                  {historialFiltrado.length === 0 ? (
                     <p className="text-gray-500 text-sm text-center py-8">
-                      No hay glosas generadas aún
+                      {historial.length === 0 ? 'No hay glosas generadas aún' : 'Sin resultados para la búsqueda'}
                     </p>
                   ) : (
-                    historial.map(glosa => (
+                    historialFiltrado.map((glosa) => (
                       <div
                         key={glosa.id}
-                        className="bg-white p-3 rounded border border-gray-300 hover:border-blue-500 cursor-pointer transition-all"
-                        onClick={() => duplicarGlosa(glosa)}
+                        className="relative bg-white rounded border border-gray-300 hover:border-blue-500 transition-all"
                       >
-                        <div className="text-xs text-gray-500 mb-1">{glosa.fecha}</div>
-                        <div className="text-sm font-medium text-gray-800 truncate">
-                          {glosa.texto.substring(0, 60)}...
-                        </div>
-                        <div className="text-xs text-blue-600 mt-2 font-medium">
-                          Click para duplicar
-                        </div>
+                        <button
+                          className="w-full text-left p-3 pr-8 cursor-pointer"
+                          onClick={() => duplicarGlosa(glosa)}
+                        >
+                          <div className="text-xs text-gray-500 mb-1">{glosa.fecha}</div>
+                          <div className="text-sm font-medium text-gray-800 line-clamp-2">
+                            {glosa.texto.substring(0, 70)}...
+                          </div>
+                          <div className="text-xs text-blue-600 mt-2 font-medium">Click para duplicar</div>
+                        </button>
+                        <button
+                          onClick={() => eliminarDelHistorial(glosa.id)}
+                          className="absolute top-1 right-1 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          aria-label="Eliminar del historial"
+                          title="Eliminar del historial"
+                        >
+                          <Trash2 size={14} aria-hidden="true" />
+                        </button>
                       </div>
                     ))
                   )}
                 </div>
               </div>
-            </div>
+            </aside>
           </div>
         </div>
       </div>
 
       {/* Notificación de Éxito */}
       {showSuccess && (
-        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-2xl animate-bounce">
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-2xl print:hidden" role="status">
           ✅ ¡Glosa copiada al portapapeles!
         </div>
       )}
 
       {/* Diálogo de Confirmación */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 print:hidden" role="dialog" aria-modal="true">
           <div className="bg-white p-6 rounded-lg shadow-2xl max-w-md mx-4">
             <div className="flex items-center gap-3 mb-4">
-              <AlertCircle size={24} className="text-yellow-600" />
+              <AlertCircle size={24} className="text-amber-600" aria-hidden="true" />
               <h3 className="text-lg font-bold text-gray-800">Confirmar acción</h3>
             </div>
-            <p className="text-gray-600 mb-6">
-              ¿Está seguro de que desea limpiar todos los datos del formulario?
-            </p>
+            <p className="text-gray-600 mb-6">{confirmMensaje}</p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowConfirmDialog(false)}

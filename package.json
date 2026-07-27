@@ -2,7 +2,7 @@
   "name": "generador-glosas-siga",
   "version": "1.0.0",
   "type": "module",
-  "description": "Generador de Glosas SIGA - Gobierno Regional de Piura",
+  "description": "Generador de Glosas SIGA - Municipalidad Distrital 26 de Octubre",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
@@ -33,7 +33,9 @@
     "react",
     "glosas",
     "siga",
-    "gobierno-regional",
+    "municipalidad",
+    "26-de-octubre",
+    "abastecimiento",
     "piura"
   ],
   "author": "Tu Nombre",
