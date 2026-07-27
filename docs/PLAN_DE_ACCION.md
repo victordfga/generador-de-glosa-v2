@@ -9,10 +9,15 @@
 ## 1. Contexto
 
 El aplicativo **Generador de Glosas SIGA** es una SPA (React + Vite + TypeScript + Tailwind)
-que estandariza el texto de las glosas para el registro en el SIGA. Fue construido
-originalmente con datos del **Gobierno Regional de Piura** y se necesita adaptarlo a la
-realidad de la **Municipalidad Distrital 26 de Octubre**, integrándolo al ecosistema que
-ya usa la oficina (SISGEDO, sobre Supabase).
+que estandariza el texto de las glosas para pegarlo en las órdenes que se registran en el
+SIGA. Fue construido originalmente con datos del **Gobierno Regional de Piura** y se adapta
+a la realidad de la **Municipalidad Distrital 26 de Octubre**.
+
+**Finalidad y alcance:** es una **herramienta de uso personal** del responsable de
+Abastecimiento. Su objetivo es (1) generar rápido el texto de la glosa y (2) mantener un
+**historial personal** de glosas como referencia (por si se consulta una orden). **No** es
+un sistema compartido de oficina ni está integrado con SISGEDO; el catálogo de áreas se tomó
+de SISGEDO una sola vez como semilla de datos, pero el aplicativo no se conecta a esa base.
 
 ---
 
@@ -41,7 +46,8 @@ ya usa la oficina (SISGEDO, sobre Supabase).
 - CI (GitHub Pages) sin lint ni pruebas.
 
 ### 2.5 Persistencia
-- Todo en `localStorage`: **no se comparte** entre las PCs de la oficina.
+- Todo en `localStorage`: **frágil para un historial de referencia** (se pierde al limpiar
+  caché, con otro navegador o al cambiar de PC) y limitado a 20 registros.
 
 ---
 
@@ -49,20 +55,20 @@ ya usa la oficina (SISGEDO, sobre Supabase).
 
 | Tema | Decisión | Justificación |
 |------|----------|---------------|
-| Áreas usuarias | Extraer de **SISGEDO** (tabla `remitentes`, tipo INTERNO) | Única fuente de verdad; datos reales y vigentes |
-| Backend | **Supabase compartido** (proyecto `siscodo-mdvo`) | Reutiliza la infraestructura que ya opera Abastecimiento |
-| Despliegue | **Migrar a Vercel** | Manejo limpio de variables de entorno, previews por PR, consistencia con SISGEDO (`sisgedo-mdvo.vercel.app`) y elimina la subruta de GitHub Pages |
-| Seguridad | No debilitar el RLS de producción | `remitentes` es legible solo por usuarios `authenticated`; la lectura en vivo se hará con sesión autenticada en la Fase 2 |
+| Áreas usuarias | **Semilla estática** tomada una vez de SISGEDO (`remitentes`, tipo INTERNO) | Datos reales sin acoplar el aplicativo a otra base; el generador no se conecta a SISGEDO |
+| Durabilidad del historial | **Respaldo por archivo** (Exportar/Importar JSON) | Uso personal: portátil entre PCs y a prueba de limpieza de caché, sin infraestructura ni login |
+| Despliegue | **GitHub Pages** (Vercel opcional) | Sin backend no hacen falta variables de entorno; ya está configurado. `base: './'` deja Vercel disponible si se quisiera |
 
-> **Recomendación de despliegue:** Vercel. GitHub Pages sigue siendo un *fallback* válido
-> (la `base` de Vite se dejó en `./` para que ambos funcionen).
+> **Nota:** el aplicativo es de uso personal y no requiere backend, autenticación ni
+> integración con SISGEDO. Un backend en la nube solo se justificaría si se necesitara
+> sincronización automática entre varias PCs (ver Fase 2, opcional).
 
 ---
 
 ## 4. Plan por fases
 
 ### Fase 1 — Rebranding, datos, calidad y nuevas funciones *(este PR)*
-**Objetivo:** aplicativo correcto, profesional y desplegable, sin tocar la base de producción.
+**Objetivo:** aplicativo correcto, profesional y desplegable.
 
 - [x] Catálogo real de áreas de la MD 26 de Octubre (`src/data/areasUsuarias.ts`, semilla desde SISGEDO).
 - [x] Configuración de tipos de glosa extraída a datos (`src/data/tiposGlosa.ts`) con placeholders MDVO.
@@ -72,75 +78,43 @@ ya usa la oficina (SISGEDO, sobre Supabase).
 - [x] Nuevas funciones: **imprimir / exportar a PDF** con membrete, **búsqueda** en el historial.
 - [x] Mejora UI/UX: identidad institucional, responsive, accesibilidad (`htmlFor`, `aria-label`, roles).
 - [x] Limpieza: eliminación del archivo muerto de la raíz.
-- [x] Despliegue: `vercel.json`, `.env.example`, `base: './'`.
+- [x] Despliegue: `base: './'` (compatible con GitHub Pages y Vercel).
 
-### Fase 2 — Backend compartido (Supabase + autenticación)
-**Objetivo:** historial y plantillas compartidos entre las PCs de la oficina y catálogo de áreas en vivo.
+### Fase 2 — Durabilidad del historial personal *(este PR)*
+**Objetivo:** que el historial de referencia no se pierda y sea portátil, sin backend.
 
-- [ ] Autenticación (reutilizar el login de SISGEDO o Supabase Auth) para respetar el RLS existente.
-- [ ] Cliente Supabase (`src/lib/supabase.ts`) leído por variables de entorno.
-- [ ] Lectura del catálogo de áreas en vivo desde `remitentes` (usuario autenticado).
-- [ ] Tablas `glosa_historial` y `glosa_plantillas` (ver esquema en §5), con RLS.
-- [ ] Sincronización localStorage ⇄ Supabase (modo offline como respaldo).
+- [x] **Exportar** el historial a un archivo JSON de respaldo.
+- [x] **Importar** un historial desde archivo, fusionando por `id` (sin duplicar).
+- [x] Ampliar el tope del historial de 20 a **200** registros.
+- [x] **Eliminar** entradas individuales del historial.
 
-**Esquema propuesto (migración a revisar antes de aplicar a producción):**
+> Un backend en la nube (Supabase personal para sincronización automática entre PCs) queda
+> como opción futura solo si el respaldo por archivo resultara insuficiente. No se contempla
+> ninguna integración con la base de SISGEDO.
 
-```sql
--- Tablas propias del generador de glosas (aisladas de SISGEDO por prefijo glosa_)
-create table if not exists public.glosa_historial (
-  id           bigint generated always as identity primary key,
-  tipo         text not null,
-  texto        text not null,
-  form_data    jsonb not null default '{}'::jsonb,
-  items        jsonb not null default '[]'::jsonb,
-  creado_por   uuid references auth.users(id),
-  creado_en    timestamptz not null default now()
-);
-
-create table if not exists public.glosa_plantillas (
-  id           bigint generated always as identity primary key,
-  slot         smallint not null check (slot between 1 and 3),
-  nombre       text not null,
-  tipo         text not null,
-  form_data    jsonb not null default '{}'::jsonb,
-  items        jsonb not null default '[]'::jsonb,
-  creado_por   uuid references auth.users(id),
-  creado_en    timestamptz not null default now(),
-  unique (creado_por, slot)
-);
-
-alter table public.glosa_historial  enable row level security;
-alter table public.glosa_plantillas enable row level security;
-
--- Políticas: solo usuarios autenticados; historial visible para toda la oficina.
-create policy glosa_hist_select on public.glosa_historial for select to authenticated using (true);
-create policy glosa_hist_insert on public.glosa_historial for insert to authenticated with check (true);
-create policy glosa_plan_all    on public.glosa_plantillas for all to authenticated using (true) with check (true);
-```
-
-### Fase 3 — Reportes y valor agregado *(backlog)*
+### Fase 3 — Valor agregado *(backlog)*
 - [ ] Exportación a Word/plantilla oficial.
-- [ ] Numeración correlativa de glosas y trazabilidad por área.
-- [ ] Tablero: glosas por área/mes, tiempos, reutilización de plantillas.
+- [ ] Filtros del historial por tipo de glosa y por número de orden (O/C, O/S).
 - [ ] Pruebas automatizadas (Vitest) sobre `src/lib/glosa.ts` y lint en CI.
 
 ---
 
-## 5. Modelo de datos (referencia)
+## 5. Datos (referencia)
 
-**Origen del catálogo de áreas:** proyecto Supabase `siscodo-mdvo`
-(`https://dsrtxkyywnfsfwldvwdn.supabase.co`), tabla `public.remitentes`,
-filtro `tipo = 'INTERNO' AND activo = true`. Ver esquema de tablas propias en §4 (Fase 2).
+**Origen del catálogo de áreas:** se tomó una única vez del proyecto Supabase `siscodo-mdvo`
+(`public.remitentes`, `tipo = 'INTERNO'`) y se guardó como semilla estática en
+`src/data/areasUsuarias.ts`. El aplicativo **no** consulta esa base en tiempo de ejecución.
+El historial y las plantillas se guardan en `localStorage` del navegador, con respaldo
+manual por archivo (Exportar/Importar).
 
 ---
 
 ## 6. Checklist de calidad
 
-- [ ] `npm run build` sin errores.
-- [ ] `npm run lint` sin errores.
-- [ ] Verificación en preview: generación de las 4 glosas, impresión/PDF, búsqueda de historial, responsive.
-- [ ] Revisión de accesibilidad básica.
-- [ ] Despliegue en Vercel con variables de entorno (Fase 2).
+- [x] `npm run build` sin errores.
+- [x] `npx tsc --noEmit` sin errores.
+- [x] Verificación en navegador: generación de glosas, impresión/PDF, búsqueda, exportar/importar/eliminar historial.
+- [x] Revisión de accesibilidad básica.
 
 ---
 
@@ -148,7 +122,6 @@ filtro `tipo = 'INTERNO' AND activo = true`. Ver esquema de tablas propias en §
 
 | Riesgo | Mitigación |
 |--------|------------|
-| Tocar la base de producción de SISGEDO | En Fase 1 no se modifica; las tablas de Fase 2 van con prefijo `glosa_` y RLS propio |
-| Nombres de áreas desactualizados | Semilla marcada como provisional; Fase 2 lee en vivo desde `remitentes` |
-| Exposición de datos | Backend solo para usuarios autenticados; no se debilita el RLS actual |
-| Migración de despliegue | `base: './'` mantiene compatibilidad con GitHub Pages como respaldo |
+| Pérdida del historial (caché/PC) | Exportar a archivo de respaldo periódicamente; importar al cambiar de equipo |
+| Nombres de áreas desactualizados | Semilla editable en `src/data/areasUsuarias.ts`; se actualiza con un cambio de código |
+| Confusión con SISGEDO | Documentado: aplicativo personal, sin conexión a esa base |

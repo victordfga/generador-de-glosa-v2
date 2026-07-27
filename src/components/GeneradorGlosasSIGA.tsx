@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Copy, Plus, Save, Trash2, FileText, Clock, AlertCircle, CheckCircle,
-  Printer, Search, Zap, Pencil, FilePlus,
+  Printer, Search, Zap, Pencil, FilePlus, Download, Upload,
 } from 'lucide-react';
 import { TIPOS_GLOSA, CAMPOS_POR_TIPO } from '../data/tiposGlosa';
 import type { TipoGlosa } from '../data/tiposGlosa';
@@ -13,7 +13,7 @@ import type {
 } from '../lib/glosa';
 
 // Constantes
-const MAX_HISTORIAL_ITEMS = 20;
+const MAX_HISTORIAL_ITEMS = 200;
 const PLANTILLA_NAME_LENGTH = 40;
 const ITEM_VACIO: Item = { descripcion: '', cantidad: '', unidad: '' };
 
@@ -34,6 +34,7 @@ const GeneradorGlosasSIGA = () => {
   const [confirmMensaje, setConfirmMensaje] = useState('');
   const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Cargar datos del localStorage al inicializar
   useEffect(() => {
@@ -171,6 +172,49 @@ const GeneradorGlosasSIGA = () => {
   };
 
   const imprimirGlosa = () => window.print();
+
+  const eliminarDelHistorial = (id: number) => {
+    setHistorial((prev) => prev.filter((g) => g.id !== id));
+  };
+
+  // Exportar el historial a un archivo JSON (respaldo personal)
+  const exportarHistorial = () => {
+    const blob = new Blob([JSON.stringify(historial, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `glosas-historial-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Importar un historial desde archivo, fusionando por id (sin duplicar)
+  const importarHistorial = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string);
+        if (!Array.isArray(data)) throw new Error('Formato inválido');
+        setHistorial((prev) => {
+          const porId = new Map<number, GlosaHistorial>();
+          [...prev, ...data].forEach((g: GlosaHistorial) => {
+            if (g && typeof g.id === 'number' && typeof g.texto === 'string') {
+              porId.set(g.id, g);
+            }
+          });
+          return Array.from(porId.values())
+            .sort((a, b) => b.id - a.id)
+            .slice(0, MAX_HISTORIAL_ITEMS);
+        });
+      } catch {
+        setValidationErrors([{ field: 'general', message: 'No se pudo importar: el archivo no es un historial válido.' }]);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   const duplicarGlosa = (glosa: GlosaHistorial) => {
     setTipoGlosa(glosa.tipo);
@@ -512,6 +556,31 @@ const GeneradorGlosasSIGA = () => {
                   <Clock size={20} className="text-blue-600" aria-hidden="true" />
                   Historial ({historial.length}/{MAX_HISTORIAL_ITEMS})
                 </h3>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={exportarHistorial}
+                    disabled={historial.length === 0}
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    title="Descargar el historial como archivo de respaldo"
+                  >
+                    <Download size={14} aria-hidden="true" /> Exportar
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-white border-2 border-blue-600 text-blue-700 rounded text-xs font-medium hover:bg-blue-50 transition-colors"
+                    title="Cargar un historial desde un archivo de respaldo"
+                  >
+                    <Upload size={14} aria-hidden="true" /> Importar
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={importarHistorial}
+                    className="hidden"
+                    aria-hidden="true"
+                  />
+                </div>
                 <div className="relative mb-3">
                   <Search size={16} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
                   <input
@@ -530,17 +599,29 @@ const GeneradorGlosasSIGA = () => {
                     </p>
                   ) : (
                     historialFiltrado.map((glosa) => (
-                      <button
+                      <div
                         key={glosa.id}
-                        className="w-full text-left bg-white p-3 rounded border border-gray-300 hover:border-blue-500 cursor-pointer transition-all"
-                        onClick={() => duplicarGlosa(glosa)}
+                        className="relative bg-white rounded border border-gray-300 hover:border-blue-500 transition-all"
                       >
-                        <div className="text-xs text-gray-500 mb-1">{glosa.fecha}</div>
-                        <div className="text-sm font-medium text-gray-800 line-clamp-2">
-                          {glosa.texto.substring(0, 70)}...
-                        </div>
-                        <div className="text-xs text-blue-600 mt-2 font-medium">Click para duplicar</div>
-                      </button>
+                        <button
+                          className="w-full text-left p-3 pr-8 cursor-pointer"
+                          onClick={() => duplicarGlosa(glosa)}
+                        >
+                          <div className="text-xs text-gray-500 mb-1">{glosa.fecha}</div>
+                          <div className="text-sm font-medium text-gray-800 line-clamp-2">
+                            {glosa.texto.substring(0, 70)}...
+                          </div>
+                          <div className="text-xs text-blue-600 mt-2 font-medium">Click para duplicar</div>
+                        </button>
+                        <button
+                          onClick={() => eliminarDelHistorial(glosa.id)}
+                          className="absolute top-1 right-1 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          aria-label="Eliminar del historial"
+                          title="Eliminar del historial"
+                        >
+                          <Trash2 size={14} aria-hidden="true" />
+                        </button>
+                      </div>
                     ))
                   )}
                 </div>

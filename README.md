@@ -13,7 +13,8 @@ Genera de forma estandarizada el texto de la glosa para:
 
 - Formularios dinámicos según el tipo de glosa.
 - Catálogo de **áreas usuarias** de la municipalidad (fuente: SISGEDO).
-- Historial de sesión con **búsqueda** y duplicado de glosas.
+- Historial personal con **búsqueda**, duplicado y eliminación de glosas.
+- **Respaldo del historial** por archivo (Exportar / Importar JSON), portátil entre equipos.
 - Plantillas rápidas reutilizables.
 - Copiar al portapapeles e **imprimir / exportar a PDF** con membrete institucional.
 
@@ -34,4 +35,5 @@ npm run preview  # previsualizar el build
 ## Stack
 
 React 18 · Vite · TypeScript · Tailwind CSS · lucide-react.
-Backend compartido (Supabase) planificado para la Fase 2.
+Aplicativo de uso personal, sin backend: los datos se guardan en el navegador
+(`localStorage`) con respaldo manual por archivo.
